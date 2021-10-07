@@ -2,6 +2,18 @@
 
 For self-educational purposes and for fun, I implemented the games TicTacToe and Four-in-a-row. Both frontend and backend are written in Rust and compiled to WebAssembly.
 
+## Build & Run
+To build the project, you need to install [Rust] with [cargo] and [wasm-pack]. After cloning the repository, you can build the project with the provided script:
+```bash
+./build.sh
+```
+
+The easiest way to run it is to launch a basic web server serving the `www` subdirectory, e.g. in python:
+```bash
+cd www
+python3 -m http.server --bind 127.0.0.1
+```
+
 ## Game Engine
 Both games share the same backend _engine_: We build a tree of possible moves up to a certain depth. Now the player can either do a move, which will be tracked in the evaluator or we can request the next best move from the evaluator. The best move is calculated in a traditional manner by summing over the average position value of each move.
 
@@ -39,6 +51,8 @@ If I get around to it, here are possible next steps that I want to look at:
 - Abstracting the concept/engine to chess (my initial goal)
 
 Please excuse that there are very few tests and the documentation is lacking a lot - since I am working on this repository for fun, this was not my main focus.
+
+~ Simon B. Gasse
 
 [html_canvas]: https://www.w3schools.com/html/html5_canvas.asp
 [wasm-pack]: https://github.com/rustwasm/wasm-pack
