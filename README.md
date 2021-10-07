@@ -2,6 +2,10 @@
 
 For self-educational purposes and for fun, I implemented the games TicTacToe and Four-in-a-row. Both frontend and backend are written in Rust and compiled to WebAssembly.
 
+![TicTacToe](./doc/TTT_AI_Moves.gif)
+![Four-in-a-row](./doc/Four_in_a_row.gif)
+![TicTacToe with console output](./doc/TTT_Console_output.gif)
+
 ## Build & Run
 To build the project, you need to install [Rust] with [cargo] and [wasm-pack]. After cloning the repository, you can build the project with the provided script:
 ```bash
