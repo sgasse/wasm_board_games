@@ -1,0 +1,37 @@
+[package]
+name = "wasm_board_games"
+description = "TicTacTo and Four-in-a-row in Rust WASM with web-worker"
+version = "0.1.0"
+authors = ["Simon B. Gasse"]
+edition = "2018"
+repository = "https://github.com/sgasse/wasm_board_games"
+license = "Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+console_error_panic_hook = { version = "0.1.6", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] }
+js-sys = "0.3.55"
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies.web-sys]
+version = "0.3.51"
+features = [
+  'CanvasRenderingContext2d',
+  'console',
+  'DedicatedWorkerGlobalScope',
+  'Document',
+  'Element',
+  'HtmlElement',
+  'HtmlCanvasElement',
+  'MessageEvent',
+  'MouseEvent',
+  'Node',
+  'Window',
+  'Worker',
+]
