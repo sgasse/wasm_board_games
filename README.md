@@ -4,7 +4,6 @@ For self-educational purposes and for fun, I implemented the games TicTacToe and
 
 ![TicTacToe](./doc/TTT_AI_Moves.gif)
 ![Four-in-a-row](./doc/Four_in_a_row.gif)
-![TicTacToe with console output](./doc/TTT_Console_output.gif)
 
 ## Build & Run
 To build the project, you need to install [Rust] with [cargo] and [wasm-pack]. After cloning the repository, you can build the project with the provided script:
@@ -27,6 +26,8 @@ Both games share the same backend _engine_: We build a tree of possible moves up
 - To separate the frontend from the backend, the evaluator doing the heavy lifting is running in a separate web-worker process. This web-worker is spawned from within WebAssembly.
 - The game interface automatically evaluates if one of the players has won.
 - Output on the JS console informs about what is going on in the backend.
+
+![TicTacToe with console output](./doc/TTT_Console_output.gif)
 
 ## Technologies / Frameworks
 - [wasm-pack][wasm-pack] to compile Rust to WebAssembly
