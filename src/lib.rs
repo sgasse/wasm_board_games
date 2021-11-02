@@ -30,17 +30,12 @@ pub fn run_tictacto() -> Result<(), JsValue> {
     // Create shared GameInterface
     let shared_game_if = Rc::new(RefCell::new(GameInterface::new_ttt()));
 
-    {
-        let game_if_ = Rc::clone(&shared_game_if);
-        let game_if_ = &*game_if_.borrow();
-        set_canvas_size(game_if_.board());
-    }
+    set_canvas_size(Rc::clone(&shared_game_if));
 
     {
         let game_if_ = Rc::clone(&shared_game_if);
         let game_if_ = &*game_if_.borrow();
-        let board = game_if_.board();
-        draw_grid(board.width(), board.height()).expect("Could not draw grid");
+        draw_grid(&game_if_).expect("Could not draw grid");
     }
 
     setup_ttt_canvas_click(Rc::clone(&shared_game_if), Rc::clone(&worker_handle));
@@ -71,17 +66,12 @@ pub fn run_four_in_a_row() -> Result<(), JsValue> {
     // Create shared GameInterface
     let shared_game_if = Rc::new(RefCell::new(GameInterface::new_fiar()));
 
-    {
-        let game_if_ = Rc::clone(&shared_game_if);
-        let game_if_ = &*game_if_.borrow();
-        set_canvas_size(game_if_.board());
-    }
+    set_canvas_size(Rc::clone(&shared_game_if));
 
     {
         let game_if_ = Rc::clone(&shared_game_if);
         let game_if_ = &*game_if_.borrow();
-        let board = game_if_.board();
-        draw_grid(board.width(), board.height()).expect("Could not draw grid");
+        draw_grid(&game_if_).expect("Could not draw grid");
     }
 
     setup_fiar_canvas_click(Rc::clone(&shared_game_if), Rc::clone(&worker_handle));
