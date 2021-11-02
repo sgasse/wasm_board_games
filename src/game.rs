@@ -6,6 +6,7 @@ pub struct GameInterface {
     num_winner: i32,
     next_turn: Cell,
     active: bool,
+    cell_size: f64,
 }
 
 /// Interface between the frontend and the backend
@@ -18,6 +19,7 @@ impl GameInterface {
             num_winner: 3i32,
             next_turn: Cell::X,
             active: false,
+            cell_size: 100.0,
         }
     }
 
@@ -29,6 +31,7 @@ impl GameInterface {
             num_winner: 4i32,
             next_turn: Cell::X,
             active: false,
+            cell_size: 100.0,
         }
     }
 
@@ -61,6 +64,14 @@ impl GameInterface {
 
     pub fn board(&self) -> &Board {
         &self.board
+    }
+
+    pub fn set_cell_size(&mut self, cell_size: f64) {
+        self.cell_size = cell_size;
+    }
+
+    pub fn cell_size(&self) -> f64 {
+        self.cell_size
     }
 
     pub fn winner(&mut self) -> Cell {

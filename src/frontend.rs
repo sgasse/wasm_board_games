@@ -1,4 +1,4 @@
-use super::board::{Board, Cell};
+use super::board::Cell;
 use super::common::{Coord, Message};
 use super::game::GameInterface;
 use std::cell::{RefCell, RefMut};
@@ -8,18 +8,37 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{console, window, HtmlElement, MessageEvent, MouseEvent, Worker};
 
-const CELL_SIZE: f64 = 50.0; // px
 const GRID_COLOR: &str = "#4d4d4d";
 const EMPTY_COLOR: &str = "#000000";
 const X_COLOR: &str = "#49b5bf";
 const O_COLOR: &str = "#c9c900";
 
-pub fn set_canvas_size(board: &Board) {
+pub fn set_canvas_size(game_if: Rc<RefCell<GameInterface>>) {
+    {
+        // Setting the cell size requires a mutable borrow - moving into a block to allow for
+        // immutable borrows of GameInterface later
+        let mut game_if_ = (*game_if).borrow_mut();
+        let window = window().unwrap();
+        let board = game_if_.board();
+        let inner_width = window.inner_width().unwrap().as_f64().unwrap() as u32;
+        let inner_height = window.inner_height().unwrap().as_f64().unwrap() as u32;
+
+        // Use 80% of the width or 66% of the height
+        let cell_size = 4 * std::cmp::min(
+            (inner_width / 5) / board.width() as u32,
+            (inner_height / 6) / board.height() as u32,
+        );
+        game_if_.set_cell_size(cell_size as f64);
+    }
+
+    let game_if_ = (*game_if).borrow();
+    let board = game_if_.board();
+    let cell_size = game_if_.cell_size() as u32;
+
+    let width = board.width() as u32 * (cell_size + 2) + 2;
+    let height = board.height() as u32 * (cell_size + 2) + 2;
+
     let canvas = get_canvas("board").unwrap();
-
-    let width = board.width() as u32 * (CELL_SIZE as u32 + 1) + 1;
-    let height = board.height() as u32 * (CELL_SIZE as u32 + 1) + 1;
-
     canvas.set_width(width);
     canvas.set_height(height);
 }
@@ -29,28 +48,27 @@ pub fn setup_ttt_canvas_click(
     worker_handle: Rc<RefCell<Worker>>,
 ) {
     let callback = Closure::wrap(Box::new(move |event: MouseEvent| {
-        let coord = canvas_pos_to_coord(event.offset_x() as f64, event.offset_y() as f64);
+        let mut game_if_ = (*game_if).borrow_mut();
+        let cell_size = game_if_.cell_size();
+        let coord =
+            canvas_pos_to_coord(event.offset_x() as f64, event.offset_y() as f64, cell_size);
 
-        {
-            let mut game_if_ = (*game_if).borrow_mut();
+        let msg = Message::SetMove(coord.clone());
 
-            let msg = Message::SetMove(coord.clone());
-
-            if let true = game_if_.set_cell(coord.row, coord.col) {
-                let worker = &*worker_handle.borrow_mut();
-                let msg = JsValue::from_serde(&msg).unwrap();
-                match worker.post_message(&msg.into()) {
-                    Ok(()) => {
-                        draw_grid(game_if_.board().width(), game_if_.board().height()).unwrap();
-                        draw_cells(game_if_.board()).unwrap();
-                        maybe_set_winner(game_if_);
-                    }
-                    Err(_) => console::log_1(&"Error sending a message to the worker".into()),
+        if let true = game_if_.set_cell(coord.row, coord.col) {
+            let worker = &*worker_handle.borrow_mut();
+            let msg = JsValue::from_serde(&msg).unwrap();
+            match worker.post_message(&msg.into()) {
+                Ok(()) => {
+                    draw_grid(&game_if_).unwrap();
+                    draw_cells(&game_if_).unwrap();
+                    maybe_set_winner(game_if_);
                 }
+                Err(_) => console::log_1(&"Error sending a message to the worker".into()),
             }
         }
 
-        log_debug_pos(event.offset_x(), event.offset_y());
+        log_debug_pos(event.offset_x(), event.offset_y(), cell_size);
     }) as Box<dyn FnMut(_)>);
 
     set_onclick_callback("board", &callback);
@@ -64,11 +82,12 @@ pub fn setup_fiar_canvas_click(
     worker_handle: Rc<RefCell<Worker>>,
 ) {
     let callback = Closure::wrap(Box::new(move |event: MouseEvent| {
-        let mut coord = canvas_pos_to_coord(event.offset_x() as f64, event.offset_y() as f64);
+        let mut game_if_ = (*game_if).borrow_mut();
+        let cell_size = game_if_.cell_size();
+        let mut coord =
+            canvas_pos_to_coord(event.offset_x() as f64, event.offset_y() as f64, cell_size);
 
         {
-            let mut game_if_ = (*game_if).borrow_mut();
-
             match game_if_.board().get_first_empty_row_in_col(coord.col) {
                 Ok(row) => {
                     coord.row = row;
@@ -80,9 +99,8 @@ pub fn setup_fiar_canvas_click(
                         let msg = JsValue::from_serde(&msg).unwrap();
                         match worker.post_message(&msg.into()) {
                             Ok(()) => {
-                                draw_grid(game_if_.board().width(), game_if_.board().height())
-                                    .unwrap();
-                                draw_cells(game_if_.board()).unwrap();
+                                draw_grid(&game_if_).unwrap();
+                                draw_cells(&game_if_).unwrap();
                                 maybe_set_winner(game_if_);
                             }
                             Err(_) => {
@@ -95,7 +113,7 @@ pub fn setup_fiar_canvas_click(
             }
         }
 
-        log_debug_pos(event.offset_x(), event.offset_y());
+        log_debug_pos(event.offset_x(), event.offset_y(), cell_size);
     }) as Box<dyn FnMut(_)>);
 
     set_onclick_callback("board", &callback);
@@ -144,8 +162,8 @@ pub fn setup_worker_on_msg_callback(
                 if let Message::SetMove(move_coords) = msg {
                     match game_if_.set_cell(move_coords.row, move_coords.col) {
                         true => {
-                            draw_grid(game_if_.board().width(), game_if_.board().height()).unwrap();
-                            draw_cells(game_if_.board()).unwrap();
+                            draw_grid(&game_if_).unwrap();
+                            draw_cells(&game_if_).unwrap();
 
                             maybe_set_winner(game_if_)
                         }
@@ -176,8 +194,8 @@ pub fn get_reset_closure(
             let game_if_ = &mut *game_if.borrow_mut();
             game_if_.reset();
             set_text_field("notification", init_notification);
-            draw_grid(game_if_.board().width(), game_if_.board().height()).unwrap();
-            draw_cells(game_if_.board()).unwrap();
+            draw_grid(game_if_).unwrap();
+            draw_cells(game_if_).unwrap();
             {
                 let msg = Message::Reset;
                 let worker = &*worker_handle.borrow_mut();
@@ -257,21 +275,25 @@ pub fn set_onclick_callback<T: ?Sized>(element_name: &str, callback: &Closure<T>
         .set_onclick(Some(callback.as_ref().unchecked_ref()));
 }
 
-fn log_debug_pos(x: i32, y: i32) {
+fn log_debug_pos(x: i32, y: i32, cell_size: f64) {
     console::log_2(&"Offset X: ".into(), &x.into());
     console::log_2(&"Offset Y: ".into(), &y.into());
-    let coord = canvas_pos_to_coord(x as f64, y as f64);
+    let coord = canvas_pos_to_coord(x as f64, y as f64, cell_size);
     console::log_2(&"Row: ".into(), &coord.row.into());
     console::log_2(&"Col: ".into(), &coord.col.into());
 }
 
-fn canvas_pos_to_coord(x: f64, y: f64) -> Coord {
-    let row = ((y - 1.0) / (CELL_SIZE + 1.0)).floor() as i32;
-    let col = ((x - 1.0) / (CELL_SIZE + 1.0)).floor() as i32;
+fn canvas_pos_to_coord(x: f64, y: f64, cell_size: f64) -> Coord {
+    let row = ((y - 1.0) / (cell_size + 1.0)).floor() as i32;
+    let col = ((x - 1.0) / (cell_size + 1.0)).floor() as i32;
     Coord { row, col }
 }
 
-pub fn draw_grid(width: i32, height: i32) -> Result<(), &'static str> {
+pub fn draw_grid(game_if: &GameInterface) -> Result<(), &'static str> {
+    let width = game_if.board().width();
+    let height = game_if.board().height();
+    let cell_size = game_if.cell_size();
+
     let canvas = get_canvas("board")?;
     let ctx = get_2d_context(&canvas)?;
 
@@ -283,24 +305,25 @@ pub fn draw_grid(width: i32, height: i32) -> Result<(), &'static str> {
         canvas.height() as f64,
     );
 
+    ctx.set_line_width(2.0);
     ctx.begin_path();
     ctx.set_stroke_style(&wasm_bindgen::JsValue::from_str(GRID_COLOR));
 
     // Vertical lines
     for i in 0..=width {
-        ctx.move_to(i as f64 * (CELL_SIZE + 1.0) + 1.0, 0.0);
+        ctx.move_to(i as f64 * (cell_size + 2.0) + 2.0, 0.0);
         ctx.line_to(
-            i as f64 * (CELL_SIZE + 1.0) + 1.0,
-            (CELL_SIZE + 1.0) * height as f64 + 1.0,
+            i as f64 * (cell_size + 2.0) + 2.0,
+            (cell_size + 2.0) * height as f64 + 2.0,
         );
     }
 
     // Horizontal lines
     for j in 0..=height {
-        ctx.move_to(0.0, j as f64 * (CELL_SIZE + 1.0) + 1.0);
+        ctx.move_to(0.0, j as f64 * (cell_size + 2.0) + 2.0);
         ctx.line_to(
-            (CELL_SIZE + 1.0) * width as f64 + 1.0,
-            j as f64 * (CELL_SIZE + 1.0) + 1.0,
+            (cell_size + 2.0) * width as f64 + 2.0,
+            j as f64 * (cell_size + 2.0) + 2.0,
         );
     }
 
@@ -309,7 +332,10 @@ pub fn draw_grid(width: i32, height: i32) -> Result<(), &'static str> {
     Ok(())
 }
 
-pub fn draw_cells(board: &Board) -> Result<(), &str> {
+pub fn draw_cells(game_if: &GameInterface) -> Result<(), &str> {
+    let board = game_if.board();
+    let cell_size = game_if.cell_size();
+
     let ctx = get_2d_context(&get_canvas("board")?)?;
 
     ctx.begin_path();
@@ -323,10 +349,10 @@ pub fn draw_cells(board: &Board) -> Result<(), &str> {
             }
 
             ctx.fill_rect(
-                col as f64 * (CELL_SIZE + 1.0) + 1.0,
-                row as f64 * (CELL_SIZE + 1.0) + 1.0,
-                CELL_SIZE,
-                CELL_SIZE,
+                col as f64 * (cell_size + 2.0) + 2.0,
+                row as f64 * (cell_size + 2.0) + 2.0,
+                cell_size,
+                cell_size,
             )
         }
     }

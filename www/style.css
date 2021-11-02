@@ -10,6 +10,7 @@ body {
     justify-content: center;
     background-color: black;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 10vmin;
     color: white;
 }
 
@@ -23,14 +24,14 @@ body {
     background-color: #4d4d4d;
     border: none;
     padding: 10px;
-    font-size: 15px;
+    font-size: 5vmin;
 }
 
 #notification {
     background-color: #4d4d4d;
     border: none;
     padding: 10px;
-    font-size: 15px;
+    font-size: 5vmin;
     text-align: center;
     white-space: nowrap;
 }
