@@ -76,11 +76,12 @@ impl Board {
             return Err("Out of bounds in `set_cell`");
         }
 
-        if self.cells[ext_get_index(row, col, self.width)] != Cell::Empty {
+        if self.cells[self.get_index(row, col)] != Cell::Empty {
             return Err("Cell to set is not empty");
         }
 
-        self.cells[ext_get_index(row, col, self.width)] = mark;
+        let cell_ind = self.get_index(row, col);
+        self.cells[cell_ind] = mark;
 
         Ok(())
     }
@@ -253,11 +254,6 @@ fn count_equal(
     }
 
     Ok(Cell::Empty)
-}
-
-pub fn ext_get_index(row: i32, col: i32, width: i32) -> usize {
-    let idx = row * width + col;
-    idx as usize
 }
 
 #[cfg(test)]
