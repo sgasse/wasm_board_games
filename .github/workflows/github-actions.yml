@@ -1,6 +1,16 @@
 name: CI Workflow
 on: [push]
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: rust:latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Run tests
+        run: cargo test
+
   build:
     runs-on: ubuntu-latest
     container:
