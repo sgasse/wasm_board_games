@@ -125,18 +125,6 @@ impl Board {
                 Ok(w) => return Ok(w),
                 Err(e) => return Err(e),
             }
-
-            // Check diagonal up
-            match count_equal(
-                &self,
-                &Coord { row: r, col: 0 },
-                &Coord { row: -1, col: 1 },
-                num_winner,
-            ) {
-                Ok(Cell::Empty) => (),
-                Ok(w) => return Ok(w),
-                Err(e) => return Err(e),
-            }
         }
 
         for c in 0..self.width() {
@@ -151,11 +139,64 @@ impl Board {
                 Ok(w) => return Ok(w),
                 Err(e) => return Err(e),
             }
+        }
 
-            // Check diagonal down
+        // Start at (num_winner - 1) to skip diagonals with too few items
+        for r in (num_winner - 1)..self.height() {
+            // Check diagonal up (part 1)
+            match count_equal(
+                &self,
+                &Coord { row: r, col: 0 },
+                &Coord { row: -1, col: 1 },
+                num_winner,
+            ) {
+                Ok(Cell::Empty) => (),
+                Ok(w) => return Ok(w),
+                Err(e) => return Err(e),
+            }
+        }
+
+        // Column 0 is part of the block above
+        // Also skip diagonals with less than num_winner items
+        for c in 1..(self.width() - (num_winner - 1)) {
+            // Check diagonal up (part 2)
+            match count_equal(
+                &self,
+                &Coord {
+                    row: self.height() - 1,
+                    col: c,
+                },
+                &Coord { row: -1, col: 1 },
+                num_winner,
+            ) {
+                Ok(Cell::Empty) => (),
+                Ok(w) => return Ok(w),
+                Err(e) => return Err(e),
+            }
+        }
+
+        // Skip diagonals with less than num_winner items on the diagonal
+        for c in 0..(self.width() - (num_winner - 1)) {
+            // Check diagonal down (part 1)
             match count_equal(
                 &self,
                 &Coord { row: 0, col: c },
+                &Coord { row: 1, col: 1 },
+                num_winner,
+            ) {
+                Ok(Cell::Empty) => (),
+                Ok(w) => return Ok(w),
+                Err(e) => return Err(e),
+            }
+        }
+
+        // Row 0 is part of the block above
+        // Also skip diagonals with less than num_winner items
+        for r in 1..(self.height() - (num_winner - 1)) {
+            // Check diagonal down (part 2)
+            match count_equal(
+                &self,
+                &Coord { row: r, col: 0 },
                 &Coord { row: 1, col: 1 },
                 num_winner,
             ) {
@@ -203,7 +244,7 @@ fn count_equal(
             count = 1;
         }
 
-        if count >= num_winner {
+        if (count >= num_winner) && (marker != Cell::Empty) {
             return Ok(marker);
         }
 
@@ -304,6 +345,25 @@ mod test {
         let res = b1.line_count_winner(3)?;
         assert_eq!(res, Cell::X);
 
+        let mut b12 = Board::new(3, 3);
+        //   X
+        // OXO
+        // X
+        let _ = b12.set_state(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::X,
+            Cell::O,
+            Cell::X,
+            Cell::O,
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+        ]);
+
+        let res = b1.line_count_winner(3)?;
+        assert_eq!(res, Cell::X);
+
         let mut b2 = Board::new(3, 3);
         // XOX
         // OOO
@@ -371,6 +431,102 @@ mod test {
         ]);
 
         let res = b4.line_count_winner(4)?;
+        assert_eq!(res, Cell::X);
+
+        let mut b5 = Board::new(5, 4);
+        //  X
+        //  OX
+        //  OOX
+        //  OXOX
+        let _ = b5.set_state(vec![
+            Cell::Empty,
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::O,
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::O,
+            Cell::O,
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::O,
+            Cell::X,
+            Cell::O,
+            Cell::X,
+        ]);
+
+        let res = b5.line_count_winner(4)?;
+        assert_eq!(res, Cell::X);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_fiar_diagonal_winner() -> Result<(), &'static str> {
+        let mut b1 = Board::new(7, 6);
+        //
+        //
+        // X
+        // OX
+        // OOX
+        // XOOXX
+        let _ = b1.set_state(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            //
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            //
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            //
+            Cell::O,
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            //
+            Cell::O,
+            Cell::O,
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            //
+            Cell::X,
+            Cell::O,
+            Cell::O,
+            Cell::X,
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+        ]);
+
+        let res = b1.line_count_winner(4)?;
         assert_eq!(res, Cell::X);
 
         Ok(())
