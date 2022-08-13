@@ -96,14 +96,14 @@ impl T3GameState {
 }
 
 impl GameState for T3GameState {
-    fn expand<T: GameState>(&self) -> Vec<T> {
+    fn expand(&self) -> Vec<T3GameState> {
         let next_side = match self.last_move.side {
             Cell::X => Cell::O,
             Cell::O => Cell::X,
             Cell::Empty => panic!("Last move cannot be empty!"),
         };
 
-        let next_states: Vec<T> = self
+        let next_states: Vec<T3GameState> = self
             .board
             .cells()
             .iter()
@@ -114,7 +114,7 @@ impl GameState for T3GameState {
                     let (row, col) = new_board.get_coords(idx);
                     new_board.set_cell(row, col, next_side.clone());
 
-                    Some(T3GameState {
+                    return Some(T3GameState {
                         board: new_board,
                         last_move: T3Move {
                             row,
@@ -204,7 +204,7 @@ mod test {
             },
         };
 
-        let expanded_states = game_state.expand::<T3GameState>();
+        let expanded_states = game_state.expand();
         assert_eq!(expanded_states.len(), 3);
     }
 
