@@ -171,9 +171,42 @@ fn side_with_min_equal(board: &Board, pos: &Coord, d_pos: &Coord, num_winner: i3
 #[cfg(test)]
 mod test {
 
+    use crate::refactor::GameState;
+
     use super::Cell;
     use super::T3Move;
     use super::{Board, T3GameState};
+
+    #[test]
+    fn test_t3gamestate_expand() {
+        let mut b1 = Board::new(3, 3);
+        // X X
+        // O O
+        // X O
+        let _ = b1.set_state(vec![
+            Cell::X,
+            Cell::Empty,
+            Cell::X,
+            Cell::O,
+            Cell::Empty,
+            Cell::O,
+            Cell::X,
+            Cell::Empty,
+            Cell::O,
+        ]);
+
+        let game_state = T3GameState {
+            board: b1,
+            last_move: T3Move {
+                row: 2,
+                col: 2,
+                side: Cell::O,
+            },
+        };
+
+        let expanded_states = game_state.expand::<T3GameState>();
+        assert_eq!(expanded_states.len(), 3);
+    }
 
     #[test]
     fn test_t3gamestate_line_winner() {

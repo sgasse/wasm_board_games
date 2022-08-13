@@ -30,7 +30,7 @@ impl Board {
 
     pub fn get_coords(&self, idx: usize) -> (u32, u32) {
         let idx = idx as u32;
-        (idx % self.width, idx / self.height)
+        (idx / self.width, idx % self.width)
     }
 
     pub fn get_cell(&self, row: u32, col: u32) -> Result<Cell, ()> {
@@ -96,6 +96,22 @@ impl Board {
             true
         } else {
             false
+        }
+    }
+}
+
+#[cfg(test)]
+
+mod test {
+
+    use super::Board;
+
+    #[test]
+    fn test_get_coords() {
+        let board = Board::new(4, 3);
+
+        for (idx, (row, col)) in vec![(0, (0, 0)), (1, (0, 1)), (6, (1, 2))] {
+            assert_eq!(board.get_coords(idx), (row, col));
         }
     }
 }
