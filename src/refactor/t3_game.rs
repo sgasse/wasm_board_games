@@ -1,12 +1,11 @@
 use super::board::{Board, Cell, Coord};
 use super::GameState;
-
-const X_WIN_VALUE: i32 = 1000000;
+use super::X_WIN_VALUE;
 
 pub struct T3Move {
-    row: u32,
-    col: u32,
-    side: Cell,
+    pub row: u32,
+    pub col: u32,
+    pub side: Cell,
 }
 
 pub struct T3GameState {
@@ -15,6 +14,10 @@ pub struct T3GameState {
 }
 
 impl T3GameState {
+    pub fn new(board: Board, last_move: T3Move) -> Self {
+        Self { board, last_move }
+    }
+
     /// Determine the winner on the lines through `self.last_move`.
     ///
     /// This assumes that there is no winning pattern on any other line which
@@ -171,11 +174,40 @@ fn side_with_min_equal(board: &Board, pos: &Coord, d_pos: &Coord, num_winner: i3
 #[cfg(test)]
 mod test {
 
-    use crate::refactor::GameState;
-
     use super::Cell;
     use super::T3Move;
     use super::{Board, T3GameState};
+    use crate::refactor::GameState;
+
+    #[test]
+    fn test_t3gamestate_line_winner() {
+        let mut b1 = Board::new(3, 3);
+        // XO
+        // OXO
+        //  XX
+        let _ = b1.set_state(vec![
+            Cell::X,
+            Cell::O,
+            Cell::Empty,
+            Cell::O,
+            Cell::X,
+            Cell::O,
+            Cell::Empty,
+            Cell::X,
+            Cell::X,
+        ]);
+
+        let game_state = T3GameState {
+            board: b1,
+            last_move: T3Move {
+                row: 1,
+                col: 1,
+                side: Cell::X,
+            },
+        };
+
+        assert_eq!(game_state.line_winner(), Cell::X);
+    }
 
     #[test]
     fn test_t3gamestate_expand() {
@@ -206,35 +238,5 @@ mod test {
 
         let expanded_states = game_state.expand();
         assert_eq!(expanded_states.len(), 3);
-    }
-
-    #[test]
-    fn test_t3gamestate_line_winner() {
-        let mut b1 = Board::new(3, 3);
-        // XO
-        // OXO
-        //  XX
-        let _ = b1.set_state(vec![
-            Cell::X,
-            Cell::O,
-            Cell::Empty,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::Empty,
-            Cell::X,
-            Cell::X,
-        ]);
-
-        let game_state = T3GameState {
-            board: b1,
-            last_move: T3Move {
-                row: 1,
-                col: 1,
-                side: Cell::X,
-            },
-        };
-
-        assert_eq!(game_state.line_winner(), Cell::X);
     }
 }
