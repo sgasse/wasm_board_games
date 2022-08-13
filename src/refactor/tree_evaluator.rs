@@ -9,7 +9,7 @@ pub struct TreeEvaluator<T> {
     avg_values: Vec<i32>,
 }
 
-impl<T: GameState> TreeEvaluator<T> {
+impl<'a, T: GameState> TreeEvaluator<T> {
     pub fn new(init_state: T) -> TreeEvaluator<T> {
         TreeEvaluator {
             parent: vec![0],
@@ -27,8 +27,8 @@ impl<T: GameState> TreeEvaluator<T> {
 
             for &idx in expand_now.iter() {
                 let g_state = self.game_states.get(idx).expect("Game state");
-                let pos_value = self.avg_values.get(idx).expect("Position value");
-                if *pos_value == X_WIN_VALUE || *pos_value == -X_WIN_VALUE {
+                let pos_value = *self.avg_values.get(idx).expect("Position value");
+                if pos_value == X_WIN_VALUE || pos_value == -X_WIN_VALUE {
                     // State is final - skip expansion
                     continue;
                 }
@@ -71,10 +71,74 @@ impl<T: GameState> TreeEvaluator<T> {
             expand_now = expand_next;
         }
     }
+
+    fn bfs_iter(&'a self, start_idx: usize) -> BfsIterator<'a, T> {
+        BfsIterator {
+            tree_eval: &self,
+            buffer: VecDeque::from([start_idx]),
+        }
+    }
+
+    fn evaluate_states(&mut self, stop_idx: usize) {
+        let reverse_bfs_order: Vec<usize> = self
+            .bfs_iter(stop_idx)
+            .collect::<Vec<usize>>()
+            .into_iter()
+            .rev()
+            .collect();
+
+        // By traversing the graph in reverse BFS-order, we can be sure that
+        // children are evaluated before their parents.
+        for idx in reverse_bfs_order {
+            let init_value = *self.avg_values.get(idx).expect("Avg value");
+            if init_value == X_WIN_VALUE || init_value == -X_WIN_VALUE {
+                // Skip evaluating the average of children for final states
+                continue;
+            }
+
+            // Get children
+            let child_vals: Vec<i32> = self
+                .children
+                .get(idx)
+                .expect("Children")
+                .iter()
+                .map(|&child_idx| *self.avg_values.get(child_idx).expect("Avg value"))
+                .collect();
+
+            let avg_value = match child_vals.is_empty() {
+                true => init_value,
+                false => child_vals.iter().sum::<i32>() / child_vals.len() as i32,
+            };
+
+            self.avg_values[idx] = avg_value;
+        }
+    }
+}
+
+pub struct BfsIterator<'a, T> {
+    tree_eval: &'a TreeEvaluator<T>,
+    buffer: VecDeque<usize>,
+}
+
+impl<'a, T> Iterator for BfsIterator<'a, T> {
+    type Item = usize;
+
+    fn next(&mut self) -> std::option::Option<<Self as std::iter::Iterator>::Item> {
+        match self.buffer.pop_front() {
+            Some(idx) => {
+                let children = self.tree_eval.children.get(idx).expect("Children");
+                self.buffer.append(&mut VecDeque::from(children.clone()));
+                return Some(idx);
+            }
+            None => return None,
+        }
+    }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::refactor::X_WIN_VALUE;
+
     use super::{
         super::{
             board::{Board, Cell},
@@ -132,5 +196,23 @@ mod test {
         assert_eq!(tree_eval.children.len(), 6);
         assert_eq!(tree_eval.game_states.len(), 6);
         assert_eq!(tree_eval.avg_values.len(), 6);
+    }
+
+    #[test]
+    fn test_bfs_iter() {
+        let mut tree_eval = TreeEvaluator::new(get_ref_state());
+        tree_eval.expand_state_by(0, 2);
+
+        let bfs_order: Vec<usize> = tree_eval.bfs_iter(0).collect();
+        assert_eq!(bfs_order, (0..6).into_iter().collect::<Vec<usize>>());
+    }
+
+    #[test]
+    fn test_evaluate_states() {
+        let mut tree_eval = TreeEvaluator::new(get_ref_state());
+        tree_eval.expand_state_by(0, 2);
+
+        tree_eval.evaluate_states(0);
+        assert_eq!(tree_eval.avg_values[0], X_WIN_VALUE / 2);
     }
 }
