@@ -4,6 +4,7 @@ mod frontend;
 mod game;
 mod game_evaluator;
 mod game_state;
+mod refactor;
 mod tree;
 mod utils;
 mod worker;
@@ -18,6 +19,8 @@ use std::rc::Rc;
 use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 use worker::setup_worker;
+
+pub use refactor::board::{Board, Cell};
 
 // Called by our JS entry point to run TicTacTo
 #[wasm_bindgen]

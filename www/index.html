@@ -1,16 +1,20 @@
 <html>
-
-<head>
+  <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
-    <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-<body>
-    <div id=wrapper>
-        <a href="./tictacto.html">TicTacTo</a>
-        <a href="./four_in_a_row.html">Four in a row</a>
+  <body>
+    <div id="wrapper">
+      <!-- use &nbsp; to keep an empty div open-->
+      <div id="notification">Tic Tac To</div>
+      <div id="board"></div>
+
+      <button id="resetButton" class="button">Reset</button>
+      <button id="aiMove" class="button">AI move</button>
     </div>
 
-</body>
-
+    <script src="./pkg/wasm_board_games.js"></script>
+    <script src="./index.js"></script>
+  </body>
 </html>
