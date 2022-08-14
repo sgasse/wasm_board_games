@@ -1,4 +1,5 @@
 pub mod board;
+pub mod game_interface;
 pub mod t3_game;
 pub mod tree_evaluator;
 

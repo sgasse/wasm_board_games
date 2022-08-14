@@ -20,7 +20,10 @@ use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 use worker::setup_worker;
 
-pub use refactor::board::{Board, Cell};
+pub use refactor::{
+    board::{Board, Cell},
+    game_interface::T3GameInterface,
+};
 
 // Called by our JS entry point to run TicTacTo
 #[wasm_bindgen]
