@@ -9,6 +9,7 @@ const CELL_SIZE = 80
 var gBoard = null
 var gCells = null
 var nextTurn = Cell.X
+var gWorker = null
 
 function setupBoard(rows, cols) {
   const numFields = rows * cols
@@ -49,6 +50,7 @@ function setField(idx) {
   gBoard.set_cell(coords.row, coords.col, nextTurn)
   nextTurn = nextTurn == Cell.X ? Cell.O : Cell.X
   console.log(`Set field row ${coords.row} col ${coords.col}`)
+  gWorker.postMessage(coords)
 }
 
 function drawBoardFields() {
@@ -97,6 +99,9 @@ async function run_wasm() {
   setupBoard(3, 3)
   drawBoardFields()
   setupButtons()
+
+  const worker = new Worker('./ttt_worker.js')
+  gWorker = worker
 }
 
 run_wasm()
