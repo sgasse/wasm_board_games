@@ -1,11 +1,20 @@
 use super::board::{Board, Cell, Coords, DeltaCoords};
 use super::GameState;
 use super::X_WIN_VALUE;
+use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
 pub struct T3Move {
     pub row: u32,
     pub col: u32,
     pub side: Cell,
+}
+
+#[wasm_bindgen]
+impl T3Move {
+    pub fn new(row: u32, col: u32, side: Cell) -> Self {
+        Self { row, col, side }
+    }
 }
 
 pub struct T3GameState {

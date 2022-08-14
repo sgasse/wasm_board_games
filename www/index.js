@@ -1,5 +1,5 @@
 // Make WASM structs available
-const { Board, Cell } = wasm_bindgen
+const { Board, Cell, T3Move } = wasm_bindgen
 
 const BOARD_GAP_SIZE = 4
 const BOARD_PADDING = 4
@@ -8,7 +8,7 @@ const CELL_SIZE = 80
 // There global variables will be set after loading WASM
 var gBoard = null
 var gCells = null
-var nextTurn = Cell.X
+var lastMove = null
 var gWorker = null
 
 function setupBoard(rows, cols) {
@@ -47,9 +47,14 @@ function clickField(clickObj) {
 
 function setField(idx) {
   const coords = gBoard.get_coords(idx)
-  gBoard.set_cell(coords.row, coords.col, nextTurn)
-  nextTurn = nextTurn == Cell.X ? Cell.O : Cell.X
+
+  lastMove.row = coords.row
+  lastMove.col = coords.col
+  lastMove.side = lastMove.side == Cell.X ? Cell.O : Cell.X
+
+  gBoard.set_cell(coords.row, coords.col, lastMove.side)
   console.log(`Set field row ${coords.row} col ${coords.col}`)
+
   gWorker.postMessage(coords)
 }
 
@@ -76,7 +81,9 @@ function setupButtons() {
   const resetButton = document.getElementById('reset-button')
   resetButton.onclick = () => {
     gBoard.reset()
-    nextTurn = Cell.X
+    lastMove.row = 0
+    lastMove.col = 0
+    lastMove.side = Cell.O
     drawBoardFields()
   }
 }
@@ -99,6 +106,8 @@ async function run_wasm() {
   setupBoard(3, 3)
   drawBoardFields()
   setupButtons()
+
+  lastMove = T3Move.new(0, 0, Cell.O)
 
   const worker = new Worker('./ttt_worker.js')
   gWorker = worker
