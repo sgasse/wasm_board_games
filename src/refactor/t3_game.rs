@@ -1,4 +1,4 @@
-use super::board::{Board, Cell, Coord};
+use super::board::{Board, Cell, Coords, DeltaCoords};
 use super::GameState;
 use super::X_WIN_VALUE;
 
@@ -35,9 +35,9 @@ impl T3GameState {
         // | | |a| |
         // | | | | |
         let diag_down_min_dist = u32::min(self.last_move.row, self.last_move.col);
-        let diag_down_start = Coord {
-            row: (self.last_move.row - diag_down_min_dist) as i32,
-            col: (self.last_move.col - diag_down_min_dist) as i32,
+        let diag_down_start = Coords {
+            row: self.last_move.row - diag_down_min_dist,
+            col: self.last_move.col - diag_down_min_dist,
         };
 
         // Find the start point by substracting the minimum distance from the
@@ -52,37 +52,37 @@ impl T3GameState {
             self.board.height() - 1 - self.last_move.row,
             self.last_move.col,
         );
-        let diag_up_start = Coord {
-            row: (self.last_move.row + diag_up_min_dist) as i32,
-            col: (self.last_move.col - diag_up_min_dist) as i32,
+        let diag_up_start = Coords {
+            row: self.last_move.row + diag_up_min_dist,
+            col: self.last_move.col - diag_up_min_dist,
         };
 
         let pos_d_pos_pairs = vec![
             (
                 // Horizontal
-                Coord {
-                    row: self.last_move.row as i32,
+                Coords {
+                    row: self.last_move.row,
                     col: 0,
                 },
-                Coord { row: 0, col: 1 },
+                DeltaCoords { row: 0, col: 1 },
             ),
             (
                 // Vertical
-                Coord {
+                Coords {
                     row: 0,
-                    col: self.last_move.col as i32,
+                    col: self.last_move.col,
                 },
-                Coord { row: 1, col: 0 },
+                DeltaCoords { row: 1, col: 0 },
             ),
             (
                 // Diagonal down
                 diag_down_start,
-                Coord { row: 1, col: 1 },
+                DeltaCoords { row: 1, col: 1 },
             ),
             (
                 // Diagonal up
                 diag_up_start,
-                Coord { row: -1, col: 1 },
+                DeltaCoords { row: -1, col: 1 },
             ),
         ];
 
@@ -114,7 +114,7 @@ impl GameState for T3GameState {
             .filter_map(|(idx, cell)| {
                 if let Cell::Empty = cell {
                     let mut new_board = self.board.clone();
-                    let (row, col) = new_board.get_coords(idx);
+                    let Coords { row, col } = new_board.get_coords(idx);
                     new_board.set_cell(row, col, next_side.clone());
 
                     return Some(T3GameState {
@@ -142,17 +142,17 @@ impl GameState for T3GameState {
     }
 }
 
-fn side_with_min_equal(board: &Board, pos: &Coord, d_pos: &Coord, num_winner: i32) -> Cell {
+fn side_with_min_equal(board: &Board, pos: &Coords, d_pos: &DeltaCoords, num_winner: i32) -> Cell {
     let mut count = 0;
     let mut marker = Cell::Empty;
 
-    let Coord {
+    let Coords {
         row: mut cur_row,
         col: mut cur_col,
     } = pos;
 
-    while board.in_bounds(cur_row as u32, cur_col as u32) {
-        let cur_marker = board.get_cell(cur_row as u32, cur_col as u32).unwrap();
+    while board.in_bounds(cur_row, cur_col) {
+        let cur_marker = board.get_cell(cur_row, cur_col).unwrap();
         if cur_marker == marker {
             count += 1;
         } else {
@@ -164,8 +164,8 @@ fn side_with_min_equal(board: &Board, pos: &Coord, d_pos: &Coord, num_winner: i3
             return marker;
         }
 
-        cur_row = cur_row + d_pos.row;
-        cur_col = cur_col + d_pos.col;
+        cur_row = (cur_row as i32 + d_pos.row) as u32;
+        cur_col = (cur_col as i32 + d_pos.col) as u32;
     }
 
     Cell::Empty

@@ -9,8 +9,15 @@ pub enum Cell {
     O,
 }
 
+#[wasm_bindgen]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Coord {
+pub struct Coords {
+    pub row: u32,
+    pub col: u32,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DeltaCoords {
     pub row: i32,
     pub col: i32,
 }
@@ -26,11 +33,6 @@ pub struct Board {
 impl Board {
     pub fn cells(&self) -> &Vec<Cell> {
         &self.cells
-    }
-
-    pub fn get_coords(&self, idx: usize) -> (u32, u32) {
-        let idx = idx as u32;
-        (idx / self.width, idx % self.width)
     }
 
     pub fn get_cell(&self, row: u32, col: u32) -> Result<Cell, ()> {
@@ -98,20 +100,32 @@ impl Board {
             false
         }
     }
+
+    pub fn get_coords(&self, idx: usize) -> Coords {
+        let idx = idx as u32;
+        Coords {
+            row: idx / self.width,
+            col: idx % self.width,
+        }
+    }
 }
 
 #[cfg(test)]
 
 mod test {
 
-    use super::Board;
+    use super::{Board, Coords};
 
     #[test]
     fn test_get_coords() {
         let board = Board::new(4, 3);
 
-        for (idx, (row, col)) in vec![(0, (0, 0)), (1, (0, 1)), (6, (1, 2))] {
-            assert_eq!(board.get_coords(idx), (row, col));
+        for (idx, coords) in vec![
+            (0, Coords { row: 0, col: 0 }),
+            (1, Coords { row: 0, col: 1 }),
+            (6, Coords { row: 1, col: 2 }),
+        ] {
+            assert_eq!(board.get_coords(idx), coords);
         }
     }
 }
