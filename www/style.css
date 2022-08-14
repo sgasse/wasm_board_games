@@ -68,10 +68,26 @@ body {
 
 .board-field {
     background-color: var(--color1);
+    font-size: 50px;
+    text-align: center;
+}
+
+.board-field-set {
+    background-color: var(--color1);
+    font-size: 50px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.board-field-set:hover {
+    background-color: var(--color2);
 }
 
 .board-field:hover {
     background-color: var(--color4);
+    cursor: pointer;
 }
 
 .button {
@@ -86,6 +102,7 @@ body {
 .button:hover {
     color: var(--color3);
     background-color: var(--color4);
+    cursor: pointer;
 }
 
 a {
