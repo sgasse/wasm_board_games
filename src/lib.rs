@@ -23,6 +23,7 @@ use worker::setup_worker;
 pub use refactor::{
     board::{Board, Cell},
     game_interface::T3GameInterface,
+    t3_game::T3Move,
 };
 
 // Called by our JS entry point to run TicTacTo
