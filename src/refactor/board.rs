@@ -108,6 +108,12 @@ impl Board {
             col: idx % self.width,
         }
     }
+
+    pub fn reset(&mut self) {
+        for cell in self.cells.iter_mut() {
+            *cell = Cell::Empty;
+        }
+    }
 }
 
 #[cfg(test)]

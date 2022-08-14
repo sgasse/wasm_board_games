@@ -1,10 +1,14 @@
-console.log('Hello from script')
-
+// Make WASM structs available
 const { Board, Cell } = wasm_bindgen
 
 const BOARD_GAP_SIZE = 4
 const BOARD_PADDING = 4
 const CELL_SIZE = 80
+
+// There global variables will be set after loading WASM
+var gBoard = null
+var gCells = null
+var nextTurn = Cell.X
 
 function setupBoard(rows, cols) {
   const numFields = rows * cols
@@ -23,7 +27,7 @@ function setupBoard(rows, cols) {
 
 function createFields(numFields) {
   for (var i = 0; i < numFields; i++) {
-    var fieldDiv = document.createElement('div')
+    const fieldDiv = document.createElement('div')
     fieldDiv.id = `field_${i}`
     fieldDiv.className = 'board-field rounded-corners'
     fieldDiv.style.width = `${CELL_SIZE}px`
@@ -35,36 +39,64 @@ function createFields(numFields) {
 }
 
 function clickField(clickObj) {
-  console.log('Clicked', clickObj.target)
   const idx = parseInt(clickObj.target.id.split('_')[1], 10)
-  console.log(idx)
-  getRowColFromIdx(idx)
+  setField(idx)
+  drawBoardFields()
 }
 
-function getRowColFromIdx(idx) {
-  const col = idx % 3
-  const row = Math.floor(idx / 3)
-  console.log('Row', row, 'col', col)
+function setField(idx) {
+  const coords = gBoard.get_coords(idx)
+  gBoard.set_cell(coords.row, coords.col, nextTurn)
+  nextTurn = nextTurn == Cell.X ? Cell.O : Cell.X
+  console.log(`Set field row ${coords.row} col ${coords.col}`)
 }
 
-var gBoard = null
+function drawBoardFields() {
+  // console.log(gCells)
+  for (let i = 0; i < gBoard.width() * gBoard.height(); i++) {
+    const cell = gCells[i]
+    const boardField = document.getElementById(`field_${i}`)
+    if (cell == Cell.Empty) {
+      boardField.className = 'board-field rounded-corners'
+      boardField.innerHTML = ''
+    } else {
+      boardField.className = 'board-field-set rounded-corners'
+      if (cell == Cell.X) {
+        boardField.innerHTML = '<span>X</span>'
+      } else {
+        boardField.innerHTML = '<span>O</span>'
+      }
+    }
+  }
+}
+
+function setupButtons() {
+  const resetButton = document.getElementById('reset-button')
+  resetButton.onclick = () => {
+    gBoard.reset()
+    nextTurn = Cell.X
+    drawBoardFields()
+  }
+}
 
 async function run_wasm() {
   const rustWasm = await wasm_bindgen('./pkg/wasm_board_games_bg.wasm')
   console.log('WASM loaded')
-
   console.log(rustWasm.memory)
 
   var board = Board.new(3, 3)
-  board.set_cell(1, 2, Cell.O)
-  gBoard = board
   const cells = new Uint8Array(
     rustWasm.memory.buffer,
     board.cells_ptr(),
     board.width() * board.height(),
   )
-  console.log(cells)
+
+  gBoard = board
+  gCells = cells
+
   setupBoard(3, 3)
+  drawBoardFields()
+  setupButtons()
 }
 
 run_wasm()
