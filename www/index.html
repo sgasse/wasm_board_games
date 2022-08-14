@@ -5,13 +5,17 @@
   </head>
 
   <body>
-    <div id="wrapper">
-      <!-- use &nbsp; to keep an empty div open-->
-      <div id="notification">Tic Tac To</div>
-      <div id="board"></div>
-
-      <button id="resetButton" class="button">Reset</button>
-      <button id="aiMove" class="button">AI move</button>
+    <div id="content-wrapper" class="rounded-corners">
+      <div class="header">
+        <div id="notification" class="rounded-corners">Tic Tac To</div>
+      </div>
+      <div class="board-container">
+        <div id="board" class="rounded-corners"></div>
+      </div>
+      <div class="footer">
+        <button id="resetButton" class="button rounded-corners">Reset</button>
+        <button id="aiMove" class="button rounded-corners">AI move</button>
+      </div>
     </div>
 
     <script src="./pkg/wasm_board_games.js"></script>

@@ -2,21 +2,32 @@ console.log('Hello from script')
 
 const { Board, Cell } = wasm_bindgen
 
+const BOARD_GAP_SIZE = 4
+const BOARD_PADDING = 4
+const CELL_SIZE = 80
+
 function setupBoard(rows, cols) {
   const numFields = rows * cols
   createFields(numFields)
 
   const boardDiv = document.getElementById('board')
-  boardDiv.style.width = `${cols * 50 + (cols - 1) * 1}px`
-  boardDiv.style.width = `${rows * 50 + (rows - 1) * 1}px`
-  boardDiv.style.backgroundColor = 'green'
+  boardDiv.style.width = `${
+    cols * CELL_SIZE + (cols - 1) * BOARD_GAP_SIZE + 1 * BOARD_PADDING
+  }px`
+  boardDiv.style.height = `${
+    rows * CELL_SIZE + (rows - 1) * BOARD_GAP_SIZE + 1 * BOARD_PADDING
+  }px`
+  boardDiv.style.gap = `${BOARD_GAP_SIZE}px`
+  boardDiv.style.padding = `${BOARD_PADDING}px`
 }
 
 function createFields(numFields) {
   for (var i = 0; i < numFields; i++) {
     var fieldDiv = document.createElement('div')
     fieldDiv.id = `field_${i}`
-    fieldDiv.className = 'boardField'
+    fieldDiv.className = 'board-field rounded-corners'
+    fieldDiv.style.width = `${CELL_SIZE}px`
+    fieldDiv.style.height = `${CELL_SIZE}px`
     fieldDiv.onclick = clickField
     document.getElementById('board').appendChild(fieldDiv)
     console.log('Added element', i)
@@ -49,7 +60,7 @@ async function run_wasm() {
   gBoard = board
   const cells = new Uint8Array(
     rustWasm.memory.buffer,
-    board.cells(),
+    board.cells_ptr(),
     board.width() * board.height(),
   )
   console.log(cells)
