@@ -1,5 +1,5 @@
 // Make WASM structs available
-const { Board, Cell, T3Move } = wasm_bindgen
+const { Board, Cell, T3Move, Coords } = wasm_bindgen
 
 const BOARD_GAP_SIZE = 4
 const BOARD_PADDING = 4
@@ -41,21 +41,23 @@ function createFields(numFields) {
 
 function clickField(clickObj) {
   const idx = parseInt(clickObj.target.id.split('_')[1], 10)
-  setField(idx)
+  setFieldWithIdx(idx)
   drawBoardFields()
+  gWorker.postMessage({ kind: 'track_move', lastMove: lastMove.to_js_value() })
 }
 
-function setField(idx) {
+function setFieldWithIdx(idx) {
   const coords = gBoard.get_coords(idx)
+  setFieldWithCoords(coords)
+}
 
+function setFieldWithCoords(coords) {
   lastMove.row = coords.row
   lastMove.col = coords.col
   lastMove.side = lastMove.side == Cell.X ? Cell.O : Cell.X
 
   gBoard.set_cell(coords.row, coords.col, lastMove.side)
   console.log(`Set field row ${coords.row} col ${coords.col}`)
-
-  gWorker.postMessage({ kind: 'track_move', lastMove: lastMove.to_js_value() })
 }
 
 function drawBoardFields() {
@@ -97,7 +99,12 @@ function setupButtons() {
 function setupWorker() {
   const worker = new Worker('./ttt_worker.js')
   worker.onmessage = async (event) => {
-    console.log('Got message from worker', event.data)
+    if (event.data.kind == 'best_move') {
+      const bestMove = T3Move.from_js_value(event.data.bestMove)
+      setFieldWithCoords(Coords.new(bestMove.row, bestMove.col))
+      drawBoardFields()
+      console.log('Got best move', bestMove, 'from worker')
+    }
   }
   gWorker = worker
 }
