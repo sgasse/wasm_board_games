@@ -55,7 +55,7 @@ function setField(idx) {
   gBoard.set_cell(coords.row, coords.col, lastMove.side)
   console.log(`Set field row ${coords.row} col ${coords.col}`)
 
-  gWorker.postMessage(coords)
+  gWorker.postMessage({ kind: 'track_move', lastMove: lastMove.to_js_value() })
 }
 
 function drawBoardFields() {
@@ -81,11 +81,25 @@ function setupButtons() {
   const resetButton = document.getElementById('reset-button')
   resetButton.onclick = () => {
     gBoard.reset()
+    gWorker.postMessage({ kind: 'reset' })
     lastMove.row = 0
     lastMove.col = 0
     lastMove.side = Cell.O
     drawBoardFields()
   }
+
+  const aiMoveButton = document.getElementById('ai-move-button')
+  aiMoveButton.onclick = () => {
+    gWorker.postMessage({ kind: 'get_best_move' })
+  }
+}
+
+function setupWorker() {
+  const worker = new Worker('./ttt_worker.js')
+  worker.onmessage = async (event) => {
+    console.log('Got message from worker', event.data)
+  }
+  gWorker = worker
 }
 
 async function run_wasm() {
@@ -108,9 +122,7 @@ async function run_wasm() {
   setupButtons()
 
   lastMove = T3Move.new(0, 0, Cell.O)
-
-  const worker = new Worker('./ttt_worker.js')
-  gWorker = worker
+  setupWorker()
 }
 
 run_wasm()
