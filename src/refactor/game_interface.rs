@@ -55,6 +55,8 @@ impl T3GameInterface {
     }
 
     pub fn get_best_move(&mut self) -> T3Move {
+        // Evaluate value of all direct child states
+        // Select child state with highest value for `side`
         let best_move = T3Move {
             row: 0,
             col: 0,

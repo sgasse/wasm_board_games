@@ -19,6 +19,18 @@ impl<'a, T: GameState> TreeEvaluator<T> {
         }
     }
 
+    pub fn expand_and_get_children_idx(&mut self, idx_to_expand: &Vec<usize>) -> Vec<usize> {
+        let mut expanded_children: Vec<usize> = Vec::new();
+
+        for &idx in idx_to_expand.iter() {
+            if let Some(children_idx) = self.expand_state(idx) {
+                expanded_children.append(&mut Vec::from(children_idx));
+            }
+        }
+
+        expanded_children
+    }
+
     fn expand_state(&mut self, idx: usize) -> Option<Vec<usize>> {
         let g_state = self.game_states.get(idx).expect("Game state");
         let pos_value = *self.avg_values.get(idx).expect("Position value");
@@ -61,42 +73,7 @@ impl<'a, T: GameState> TreeEvaluator<T> {
         Some(child_idx)
     }
 
-    pub fn expand_and_get_children_idx(&mut self, idx_to_expand: &Vec<usize>) -> Vec<usize> {
-        let mut expanded_children: Vec<usize> = Vec::new();
-
-        for &idx in idx_to_expand.iter() {
-            if let Some(children_idx) = self.expand_state(idx) {
-                expanded_children.append(&mut Vec::from(children_idx));
-            }
-        }
-
-        expanded_children
-    }
-
-    pub fn expand_states_by(&mut self, start_idx: usize, num_levels: u32) {
-        let mut expand_now: VecDeque<usize> = VecDeque::from([start_idx]);
-
-        for _ in 0..num_levels {
-            let mut expand_next: VecDeque<usize> = VecDeque::new();
-
-            for &idx in expand_now.iter() {
-                if let Some(child_idx) = self.expand_state(idx) {
-                    expand_next.append(&mut VecDeque::from(child_idx));
-                }
-            }
-
-            expand_now = expand_next;
-        }
-    }
-
-    fn bfs_iter(&'a self, start_idx: usize) -> BfsIterator<'a, T> {
-        BfsIterator {
-            tree_eval: &self,
-            buffer: VecDeque::from([start_idx]),
-        }
-    }
-
-    fn evaluate_states(&mut self, stop_idx: usize) {
+    pub fn evaluate_states(&mut self, stop_idx: usize) {
         let reverse_bfs_order: Vec<usize> = self
             .bfs_iter(stop_idx)
             .collect::<Vec<usize>>()
@@ -128,6 +105,29 @@ impl<'a, T: GameState> TreeEvaluator<T> {
             };
 
             self.avg_values[idx] = avg_value;
+        }
+    }
+
+    pub fn expand_states_by(&mut self, start_idx: usize, num_levels: u32) {
+        let mut expand_now: VecDeque<usize> = VecDeque::from([start_idx]);
+
+        for _ in 0..num_levels {
+            let mut expand_next: VecDeque<usize> = VecDeque::new();
+
+            for &idx in expand_now.iter() {
+                if let Some(child_idx) = self.expand_state(idx) {
+                    expand_next.append(&mut VecDeque::from(child_idx));
+                }
+            }
+
+            expand_now = expand_next;
+        }
+    }
+
+    fn bfs_iter(&'a self, start_idx: usize) -> BfsIterator<'a, T> {
+        BfsIterator {
+            tree_eval: &self,
+            buffer: VecDeque::from([start_idx]),
         }
     }
 }
