@@ -20,7 +20,7 @@ async function run_worker() {
       'ms',
     )
     if (expandResult != ExpandResult.Done && !pauseExpansion) {
-      setTimeout(expandGraph, 10)
+      setTimeout(expandGraph, 1)
     }
   }
 
@@ -30,7 +30,7 @@ async function run_worker() {
     pauseExpansion = true
     task()
     pauseExpansion = false
-    setTimeout(expandGraph, 10)
+    setTimeout(expandGraph, 1)
   }
 
   // Handle incoming messages
@@ -58,7 +58,7 @@ async function run_worker() {
   }
 
   // Kick off initial expansion
-  setTimeout(expandGraph, 10)
+  setTimeout(expandGraph, 1)
 }
 
 run_worker()
