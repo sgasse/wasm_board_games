@@ -6,30 +6,53 @@ async function run_worker() {
   await wasm_bindgen('./pkg/wasm_board_games_bg.wasm')
   console.log('In worker')
 
-  const game_if = T3GameInterface.new()
+  const gameIf = T3GameInterface.new()
+  var pauseExpansion = false
 
-  const do_expand = async () => {
-    const expandResult = game_if.expand_one_level()
-    if (expandResult != ExpandResult.Done) {
-      setTimeout(do_expand, 10)
+  // Expand the graph if it is not completed (to the desired depth)
+  // or there is a message to interrupt the expansion
+  const expandGraph = async () => {
+    const expandResult = gameIf.expand_one_level()
+    if (expandResult != ExpandResult.Done && !pauseExpansion) {
+      setTimeout(expandGraph, 10)
     }
   }
 
+  // Interrupt the self-rescheduling expansion calls for `task`
+  // and resume the expansion afterwards
+  function runBetweenExpansion(task) {
+    pauseExpansion = true
+    task()
+    pauseExpansion = false
+    setTimeout(expandGraph, 10)
+  }
+
+  // Handle incoming messages
   self.onmessage = async (event) => {
     console.log('Got message', event.data)
     const kind = event.data.kind
     if (kind == 'track_move') {
-      const lastMove = T3Move.from_js_value(event.data.lastMove)
-      game_if.track_move(lastMove)
+      runBetweenExpansion(() => {
+        const lastMove = T3Move.from_js_value(event.data.lastMove)
+        gameIf.track_move(lastMove)
+      })
     } else if (kind == 'reset') {
-      game_if.reset()
+      runBetweenExpansion(() => {
+        gameIf.reset()
+      })
     } else if (kind == 'get_best_move') {
-      const bestMove = game_if.get_best_move()
-      this.postMessage({ kind: 'best_move', bestMove: bestMove.to_js_value() })
+      runBetweenExpansion(() => {
+        const bestMove = gameIf.get_best_move()
+        this.postMessage({
+          kind: 'best_move',
+          bestMove: bestMove.to_js_value(),
+        })
+      })
     }
   }
 
-  setTimeout(do_expand, 10)
+  // Kick off initial expansion
+  setTimeout(expandGraph, 10)
 }
 
 run_worker()
