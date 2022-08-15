@@ -27,6 +27,7 @@ impl T3Move {
     }
 }
 
+#[derive(Debug)]
 pub struct T3GameState {
     board: Board,
     last_move: T3Move,

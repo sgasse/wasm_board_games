@@ -17,6 +17,13 @@ pub struct Coords {
     pub col: u32,
 }
 
+#[wasm_bindgen]
+impl Coords {
+    pub fn new(row: u32, col: u32) -> Self {
+        Self { row, col }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DeltaCoords {
     pub row: i32,

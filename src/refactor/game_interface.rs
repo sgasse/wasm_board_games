@@ -1,6 +1,7 @@
 use super::board::Cell;
 use super::t3_game::{T3GameState, T3Move};
 use super::tree_evaluator::TreeEvaluator;
+use super::X_WIN_VALUE;
 use wasm_bindgen::prelude::*;
 use web_sys::console;
 
@@ -148,33 +149,39 @@ impl T3GameInterface {
             .iter()
             .filter_map(|&child_idx| self.tree_eval.avg_values().get(child_idx));
 
-        let (best_idx, best_avg_value): (usize, i32) =
-            direct_children_idx.iter().zip(avg_values).fold(
-                (0, 0),
-                |(best_idx, best_avg_value), (&child_idx, &child_avg_value)| {
-                    match last_state.side() {
-                        Cell::O => {
-                            // If the last turn was O, the next is X and we want
-                            // maximum values
-                            if child_avg_value > best_avg_value {
-                                return (child_idx, child_avg_value);
-                            }
+        let (best_idx, best_avg_value): (Option<usize>, i32) = match last_state.side() {
+            Cell::O => {
+                direct_children_idx.iter().zip(avg_values).fold(
+                    (None, -X_WIN_VALUE),
+                    |(best_idx, best_avg_value), (&child_idx, &child_avg_value)| {
+                        // If the last turn was O, the next is X and we want
+                        // maximum values
+                        if child_avg_value > best_avg_value {
+                            return (Some(child_idx), child_avg_value);
                         }
-                        Cell::X => {
-                            // If the last turn was X, the next is O and we want
-                            // minimum values
-                            if child_avg_value < best_avg_value {
-                                return (child_idx, child_avg_value);
-                            }
+                        (best_idx, best_avg_value)
+                    },
+                )
+            }
+            Cell::X => {
+                direct_children_idx.iter().zip(avg_values).fold(
+                    (None, X_WIN_VALUE),
+                    |(best_idx, best_avg_value), (&child_idx, &child_avg_value)| {
+                        // If the last turn was O, the next is X and we want
+                        // maximum values
+                        if child_avg_value < best_avg_value {
+                            return (Some(child_idx), child_avg_value);
                         }
-                        _ => (),
-                    }
+                        (best_idx, best_avg_value)
+                    },
+                )
+            }
+            Cell::Empty => (None, 0),
+        };
 
-                    // Default case
-                    return (best_idx, best_avg_value);
-                },
-            );
-
-        (best_idx, best_avg_value)
+        (
+            best_idx.expect("Should have found a best index"),
+            best_avg_value,
+        )
     }
 }
