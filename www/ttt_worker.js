@@ -12,7 +12,13 @@ async function run_worker() {
   // Expand the graph if it is not completed (to the desired depth)
   // or there is a message to interrupt the expansion
   const expandGraph = async () => {
+    const startTime = new Date()
     const expandResult = gameIf.expand_one_level()
+    console.log(
+      `Expansion took`,
+      new Date().getTime() - startTime.getTime(),
+      'ms',
+    )
     if (expandResult != ExpandResult.Done && !pauseExpansion) {
       setTimeout(expandGraph, 10)
     }

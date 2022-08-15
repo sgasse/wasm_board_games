@@ -43,9 +43,18 @@ impl T3GameState {
             last_move: T3Move {
                 row: 0,
                 col: 0,
-                side: Cell::X,
+                // We usually start with X, so the "last" was O
+                side: Cell::O,
             },
         }
+    }
+
+    pub fn side(&self) -> Cell {
+        self.last_move.side
+    }
+
+    pub fn last_move(&self) -> T3Move {
+        self.last_move
     }
 
     /// Determine the winner on the lines through `self.last_move`.
