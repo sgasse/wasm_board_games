@@ -58,9 +58,25 @@ impl T3GameInterface {
         // Evaluate value of all direct child states
         self.tree_eval.evaluate_states(self.last_move_idx);
 
-        let best_move = self.identify_best_move();
+        let (best_idx, best_avg_value) = self.identify_best_move();
+        let best_move = self
+            .tree_eval
+            .game_states()
+            .get(best_idx)
+            .expect("Best state")
+            .last_move();
 
-        // TODO: Track best move?
+        console::log_1(
+            &format!(
+                "Identified best move {:?} with avg_value {}",
+                &best_move, best_avg_value
+            )
+            .into(),
+        );
+
+        // Update tracking values in game interface
+        self.last_move_idx = best_idx;
+        self.cur_expanded_depth -= 1;
 
         best_move
     }
@@ -74,7 +90,7 @@ impl T3GameInterface {
         self.max_expanded_depth = 9;
     }
 
-    fn identify_best_move(&self) -> T3Move {
+    fn identify_best_move(&self) -> (usize, i32) {
         // Select child state with highest value for `side`
         let last_state = self
             .tree_eval
@@ -119,21 +135,6 @@ impl T3GameInterface {
                 },
             );
 
-        let best_move = self
-            .tree_eval
-            .game_states()
-            .get(best_idx)
-            .expect("Best state")
-            .last_move();
-
-        console::log_1(
-            &format!(
-                "Identified best move {:?} with avg_value {}",
-                &best_move, best_avg_value
-            )
-            .into(),
-        );
-
-        best_move
+        (best_idx, best_avg_value)
     }
 }
