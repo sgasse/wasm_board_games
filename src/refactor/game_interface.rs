@@ -56,8 +56,42 @@ impl T3GameInterface {
     }
 
     pub fn track_move(&mut self, game_move: T3Move) -> bool {
-        console::log_2(&"Tracking move".into(), &game_move.into());
-        true
+        match self.identify_move(&game_move) {
+            Some(idx) => {
+                console::log_2(&"Tracked move".into(), &game_move.into());
+                // Update tracking values in game interface
+                self.last_move_idx = idx;
+                self.cur_expanded_depth -= 1;
+                return true;
+            }
+            None => {
+                console::log_2(&"Could not track move".into(), &game_move.into());
+                return false;
+            }
+        }
+    }
+
+    fn identify_move(&self, game_move: &T3Move) -> Option<usize> {
+        let direct_children = self
+            .tree_eval
+            .children()
+            .get(self.last_move_idx)
+            .expect("Direct children");
+
+        let game_states = direct_children.iter().map(|&child_idx| {
+            self.tree_eval
+                .game_states()
+                .get(child_idx)
+                .expect("Child game state")
+        });
+
+        for (&child_idx, game_state) in direct_children.iter().zip(game_states) {
+            if *game_move == game_state.last_move() {
+                return Some(child_idx);
+            }
+        }
+
+        None
     }
 
     pub fn get_best_move(&mut self) -> T3Move {
