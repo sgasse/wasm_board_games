@@ -40,7 +40,13 @@ impl T3GameInterface {
                     .expand_and_get_children_idx(&self.expand_new_idx);
                 self.cur_expanded_depth += 1;
                 console::log_1(&format!("Expanded level {}", self.cur_expanded_depth).into());
-                return ExpandResult::NotDone;
+                match self.cur_expanded_depth < self.max_expanded_depth {
+                    true => return ExpandResult::NotDone,
+                    false => {
+                        console::log_1(&"Expansion done".into());
+                        return ExpandResult::Done;
+                    }
+                }
             }
             _ => {
                 console::log_1(&"Expansion done".into());
