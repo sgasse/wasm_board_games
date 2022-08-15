@@ -108,6 +108,18 @@ impl<'a, T: GameState> TreeEvaluator<T> {
         }
     }
 
+    pub fn game_states(&self) -> &Vec<T> {
+        &self.game_states
+    }
+
+    pub fn avg_values(&self) -> &Vec<i32> {
+        &self.avg_values
+    }
+
+    pub fn children(&self) -> &Vec<Vec<usize>> {
+        &self.children
+    }
+
     pub fn expand_states_by(&mut self, start_idx: usize, num_levels: u32) {
         let mut expand_now: VecDeque<usize> = VecDeque::from([start_idx]);
 

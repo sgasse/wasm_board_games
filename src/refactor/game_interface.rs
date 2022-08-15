@@ -56,13 +56,12 @@ impl T3GameInterface {
 
     pub fn get_best_move(&mut self) -> T3Move {
         // Evaluate value of all direct child states
-        // Select child state with highest value for `side`
-        let best_move = T3Move {
-            row: 0,
-            col: 0,
-            side: Cell::X,
-        };
-        console::log_2(&"Returning best move".into(), &best_move.into());
+        self.tree_eval.evaluate_states(self.last_move_idx);
+
+        let best_move = self.identify_best_move();
+
+        // TODO: Track best move?
+
         best_move
     }
 
@@ -73,5 +72,68 @@ impl T3GameInterface {
         self.expand_new_idx = vec![0];
         self.cur_expanded_depth = 0;
         self.max_expanded_depth = 9;
+    }
+
+    fn identify_best_move(&self) -> T3Move {
+        // Select child state with highest value for `side`
+        let last_state = self
+            .tree_eval
+            .game_states()
+            .get(self.last_move_idx)
+            .expect("Last state");
+
+        let direct_children_idx = self
+            .tree_eval
+            .children()
+            .get(self.last_move_idx)
+            .expect("Direct children");
+
+        let avg_values = direct_children_idx
+            .iter()
+            .filter_map(|&child_idx| self.tree_eval.avg_values().get(child_idx));
+
+        let (best_idx, best_avg_value): (usize, i32) =
+            direct_children_idx.iter().zip(avg_values).fold(
+                (0, 0),
+                |(best_idx, best_avg_value), (&child_idx, &child_avg_value)| {
+                    match last_state.side() {
+                        Cell::O => {
+                            // If the last turn was O, the next is X and we want
+                            // maximum values
+                            if child_avg_value > best_avg_value {
+                                return (child_idx, child_avg_value);
+                            }
+                        }
+                        Cell::X => {
+                            // If the last turn was X, the next is O and we want
+                            // minimum values
+                            if child_avg_value < best_avg_value {
+                                return (child_idx, child_avg_value);
+                            }
+                        }
+                        _ => (),
+                    }
+
+                    // Default case
+                    return (best_idx, best_avg_value);
+                },
+            );
+
+        let best_move = self
+            .tree_eval
+            .game_states()
+            .get(best_idx)
+            .expect("Best state")
+            .last_move();
+
+        console::log_1(
+            &format!(
+                "Identified best move {:?} with avg_value {}",
+                &best_move, best_avg_value
+            )
+            .into(),
+        );
+
+        best_move
     }
 }
