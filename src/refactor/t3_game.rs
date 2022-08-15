@@ -1,9 +1,11 @@
 use super::board::{Board, Cell, Coords, DeltaCoords};
 use super::GameState;
 use super::X_WIN_VALUE;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct T3Move {
     pub row: u32,
     pub col: u32,
@@ -15,6 +17,14 @@ impl T3Move {
     pub fn new(row: u32, col: u32, side: Cell) -> Self {
         Self { row, col, side }
     }
+
+    pub fn from_js_value(js_value: JsValue) -> Self {
+        js_value.into_serde().unwrap()
+    }
+
+    pub fn to_js_value(&self) -> JsValue {
+        JsValue::from_serde(&self).unwrap()
+    }
 }
 
 pub struct T3GameState {
@@ -25,6 +35,17 @@ pub struct T3GameState {
 impl T3GameState {
     pub fn new(board: Board, last_move: T3Move) -> Self {
         Self { board, last_move }
+    }
+
+    pub fn default() -> Self {
+        Self {
+            board: Board::new(3, 3),
+            last_move: T3Move {
+                row: 0,
+                col: 0,
+                side: Cell::X,
+            },
+        }
     }
 
     /// Determine the winner on the lines through `self.last_move`.
