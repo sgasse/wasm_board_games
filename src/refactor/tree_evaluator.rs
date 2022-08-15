@@ -61,6 +61,18 @@ impl<'a, T: GameState> TreeEvaluator<T> {
         Some(child_idx)
     }
 
+    pub fn expand_and_get_children_idx(&mut self, idx_to_expand: &Vec<usize>) -> Vec<usize> {
+        let mut expanded_children: Vec<usize> = Vec::new();
+
+        for &idx in idx_to_expand.iter() {
+            if let Some(children_idx) = self.expand_state(idx) {
+                expanded_children.append(&mut Vec::from(children_idx));
+            }
+        }
+
+        expanded_children
+    }
+
     pub fn expand_states_by(&mut self, start_idx: usize, num_levels: u32) {
         let mut expand_now: VecDeque<usize> = VecDeque::from([start_idx]);
 

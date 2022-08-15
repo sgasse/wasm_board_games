@@ -22,7 +22,7 @@ use worker::setup_worker;
 
 pub use refactor::{
     board::{Board, Cell},
-    game_interface::T3GameInterface,
+    game_interface::{ExpandResult, T3GameInterface},
     t3_game::T3Move,
 };
 
