@@ -166,7 +166,7 @@ impl<'a, T> Iterator for BfsIterator<'a, T> {
 
 #[cfg(test)]
 mod test {
-    use crate::refactor::X_WIN_VALUE;
+    use crate::refactor::{board::Coords, X_WIN_VALUE};
 
     use super::{
         super::{
@@ -196,8 +196,7 @@ mod test {
         T3GameState::new(
             b1,
             T3Move {
-                row: 2,
-                col: 2,
+                coords: Coords { row: 2, col: 2 },
                 side: Cell::O,
             },
         )

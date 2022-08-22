@@ -10,6 +10,7 @@ var gBoard = null
 var gCells = null
 var lastMove = null
 var gWorker = null
+var gameActive = true
 
 function setupBoard(rows, cols) {
   const numFields = rows * cols
@@ -52,16 +53,29 @@ function setFieldWithIdx(idx) {
 }
 
 function setFieldWithCoords(coords) {
-  lastMove.row = coords.row
-  lastMove.col = coords.col
-  lastMove.side = lastMove.side == Cell.X ? Cell.O : Cell.X
+  if (gameActive) {
+    lastMove.coords = coords
+    lastMove.side = lastMove.side == Cell.X ? Cell.O : Cell.X
 
-  gBoard.set_cell(coords.row, coords.col, lastMove.side)
-  console.log(`Set field row ${coords.row} col ${coords.col}`)
+    gBoard.set_cell(lastMove.coords.row, lastMove.coords.col, lastMove.side)
+    console.log(
+      `Set field row ${lastMove.coords.row} col ${lastMove.coords.col}`,
+    )
+
+    const winner = gBoard.line_winner(lastMove.coords, 3)
+    checkWinner(winner)
+  }
+}
+
+function checkWinner(winner) {
+  if (winner == Cell.X || winner == Cell.O) {
+    gameActive = false
+    const winnerName = winner == Cell.X ? 'X' : 'O'
+    document.getElementById('notification').innerText = `${winnerName} wins!`
+  }
 }
 
 function drawBoardFields() {
-  // console.log(gCells)
   for (let i = 0; i < gBoard.width() * gBoard.height(); i++) {
     const cell = gCells[i]
     const boardField = document.getElementById(`field_${i}`)
@@ -84,15 +98,19 @@ function setupButtons() {
   resetButton.onclick = () => {
     gBoard.reset()
     gWorker.postMessage({ kind: 'reset' })
-    lastMove.row = 0
-    lastMove.col = 0
+    lastMove.coords.row = 0
+    lastMove.coords.col = 0
     lastMove.side = Cell.O
     drawBoardFields()
+    document.getElementById('notification').innerText = 'Tic Tac To'
+    gameActive = true
   }
 
   const aiMoveButton = document.getElementById('ai-move-button')
   aiMoveButton.onclick = () => {
-    gWorker.postMessage({ kind: 'get_best_move' })
+    if (gameActive) {
+      gWorker.postMessage({ kind: 'get_best_move' })
+    }
   }
 }
 
@@ -100,10 +118,12 @@ function setupWorker() {
   const worker = new Worker('./ttt_worker.js')
   worker.onmessage = async (event) => {
     if (event.data.kind == 'best_move') {
-      const bestMove = T3Move.from_js_value(event.data.bestMove)
-      setFieldWithCoords(Coords.new(bestMove.row, bestMove.col))
-      drawBoardFields()
-      console.log('Got best move', bestMove, 'from worker')
+      if (gameActive) {
+        const bestMove = T3Move.from_js_value(event.data.bestMove)
+        setFieldWithCoords(bestMove.coords)
+        drawBoardFields()
+        console.log('Got best move', bestMove, 'from worker')
+      }
     }
   }
   gWorker = worker
