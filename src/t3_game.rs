@@ -110,8 +110,7 @@ mod test {
 
     use super::Cell;
     use super::T3Move;
-    use super::{Board, T3GameState};
-    use crate::refactor::{board::Coords, GameState};
+    use super::{Board, Coords, GameState, T3GameState};
 
     #[test]
     fn test_t3gamestate_expand() {
