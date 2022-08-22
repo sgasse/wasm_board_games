@@ -1,6 +1,5 @@
-use std::collections::VecDeque;
-
 use super::{GameState, X_WIN_VALUE};
+use std::collections::VecDeque;
 
 pub struct TreeEvaluator<T> {
     parent: Vec<usize>,
@@ -166,7 +165,7 @@ impl<'a, T> Iterator for BfsIterator<'a, T> {
 
 #[cfg(test)]
 mod test {
-    use crate::refactor::{board::Coords, X_WIN_VALUE};
+    use crate::{board::Coords, X_WIN_VALUE};
 
     use super::{
         super::{

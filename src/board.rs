@@ -1,21 +1,68 @@
-use super::common::Coord;
+use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[wasm_bindgen]
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
 pub enum Cell {
     Empty,
     X,
     O,
 }
 
+#[wasm_bindgen]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Coords {
+    pub row: u32,
+    pub col: u32,
+}
+
+#[wasm_bindgen]
+impl Coords {
+    pub fn new(row: u32, col: u32) -> Self {
+        Self { row, col }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DeltaCoords {
+    pub row: i32,
+    pub col: i32,
+}
+
+#[wasm_bindgen]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board {
     cells: Vec<Cell>,
-    width: i32,
-    height: i32,
+    width: u32,
+    height: u32,
 }
 
 impl Board {
-    pub fn new(width: i32, height: i32) -> Board {
+    pub fn cells(&self) -> &Vec<Cell> {
+        &self.cells
+    }
+
+    pub fn get_cell(&self, row: u32, col: u32) -> Result<Cell, ()> {
+        match self.in_bounds(row, col) {
+            true => Ok(self.cells.get(self.get_index(row, col)).unwrap().clone()),
+            false => Err(()),
+        }
+    }
+
+    pub fn set_state(&mut self, state: Vec<Cell>) -> Result<(), ()> {
+        if state.len() != (self.width * self.height) as usize {
+            return Err(());
+        }
+
+        self.cells = state;
+        Ok(())
+    }
+}
+
+#[wasm_bindgen]
+impl Board {
+    pub fn new(width: u32, height: u32) -> Self {
         Board {
             cells: vec![Cell::Empty; (width * height) as usize],
             width,
@@ -23,221 +70,147 @@ impl Board {
         }
     }
 
-    pub fn in_bounds(&self, row: i32, col: i32) -> bool {
-        if row >= 0 && row < self.height && col >= 0 && col < self.width {
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    pub fn cells_ptr(&self) -> *const Cell {
+        self.cells.as_ptr()
+    }
+
+    pub fn set_cell(&mut self, row: u32, col: u32, mark: Cell) -> bool {
+        if !self.in_bounds(row, col) {
+            return false;
+        }
+
+        if self.cells[self.get_index(row, col)] != Cell::Empty {
+            return false;
+        }
+
+        let cell_idx = self.get_index(row, col);
+        self.cells[cell_idx] = mark;
+        true
+    }
+
+    pub fn get_index(&self, row: u32, col: u32) -> usize {
+        let idx = row * self.width + col;
+        idx as usize
+    }
+
+    pub fn in_bounds(&self, row: u32, col: u32) -> bool {
+        if row < self.height && col < self.width {
             true
         } else {
             false
         }
     }
 
+    pub fn get_coords(&self, idx: usize) -> Coords {
+        let idx = idx as u32;
+        Coords {
+            row: idx / self.width,
+            col: idx % self.width,
+        }
+    }
+
     pub fn reset(&mut self) {
-        self.cells = vec![Cell::Empty; self.cells.len()];
-    }
-
-    pub fn width(&self) -> i32 {
-        self.width
-    }
-
-    pub fn height(&self) -> i32 {
-        self.height
-    }
-
-    pub fn get_index(&self, row: i32, col: i32) -> usize {
-        let idx = row * self.width + col;
-        idx as usize
-    }
-
-    pub fn get_cell(&self, row: i32, col: i32) -> Result<Cell, &'static str> {
-        if !self.in_bounds(row, col) {
-            return Err("Out of bounds in `get_cell`");
+        for cell in self.cells.iter_mut() {
+            *cell = Cell::Empty;
         }
-
-        Ok(self.cells[self.get_index(row, col)].clone())
     }
 
-    pub fn get_first_empty_row_in_col(&self, col: i32) -> Result<i32, &'static str> {
-        for row in (0..self.height()).rev() {
-            if let Ok(cell) = self.get_cell(row, col) {
-                match cell {
-                    Cell::Empty => {
-                        return Ok(row);
-                    }
-                    _ => (),
-                }
-            }
-        }
-
-        Err("No empty cell in this column.")
-    }
-
-    pub fn set_cell(&mut self, row: i32, col: i32, mark: Cell) -> Result<(), &'static str> {
-        if !self.in_bounds(row, col) {
-            return Err("Out of bounds in `set_cell`");
-        }
-
-        if self.cells[self.get_index(row, col)] != Cell::Empty {
-            return Err("Cell to set is not empty");
-        }
-
-        let cell_ind = self.get_index(row, col);
-        self.cells[cell_ind] = mark;
-
-        Ok(())
-    }
-
-    /// Set a specific state for the board.
+    /// Determine the winner on the lines through `self.last_move`.
     ///
-    /// # Arguments
-    ///
-    /// * `state` - The state to set as vector of `Cell`.
-    ///
-    /// Returns a unit-type if the state was set and an error if the state size does not match
-    /// the width and height of the board.
-    #[allow(dead_code)]
-    pub fn set_state(&mut self, state: Vec<Cell>) -> Result<(), String> {
-        if state.len() != (self.width * self.height) as usize {
-            return Err(String::from("State has the wrong size"));
-        }
+    /// This assumes that there is no winning pattern on any other line which
+    /// does not go through `self.last_move`. This is a reasonable assumption
+    /// if every game state is evaluated directly, thus a previously completed
+    /// pattern on another line would have been detected before.
+    pub fn line_winner(&self, last_move: &Coords, num_winner: i32) -> Cell {
+        // To determine the potential winner, we check the horizontal, vertial,
+        // diagonal-down and diagonal-up lines through `self.last_move`.
 
-        self.cells = state;
-        Ok(())
-    }
+        // Find the start point by substracting the minimum distance from
+        // both the row and the column.
+        // For point a (1, 2), the start of the diagonal down is s (0, 1)
+        // | |s| | |
+        // | | |a| |
+        // | | | | |
+        let diag_down_min_dist = u32::min(last_move.row, last_move.col);
+        let diag_down_start = Coords {
+            row: last_move.row - diag_down_min_dist,
+            col: last_move.col - diag_down_min_dist,
+        };
 
-    /// Determine if any player has `num_winner` tokens in any line on the board by exhaustively
-    /// evaluating all lines.
-    ///
-    /// # Arguments
-    ///
-    /// * `num_winner` - The number of tokens required to win.
-    ///
-    /// Returns the winner of the first line found if there are multiple, starting with rows, upward
-    /// pointing diagonals, columns and downward pointing diagonals.
-    pub fn line_count_winner(&self, num_winner: i32) -> Result<Cell, &'static str> {
-        for r in 0..self.height() {
-            // Check rows
-            match count_equal(
-                &self,
-                &Coord { row: r, col: 0 },
-                &Coord { row: 0, col: 1 },
-                num_winner,
-            ) {
-                Ok(Cell::Empty) => (),
-                Ok(w) => return Ok(w),
-                Err(e) => return Err(e),
-            }
-        }
+        // Find the start point by substracting the minimum distance from the
+        // column and *adding* the minimum distance to the row. For the
+        // row-part, we take the distance to the height into account since it is
+        // the diagonal up.
+        // For point a (1, 2), the start of the diagonal up is s (2, 1).
+        // | | | | |
+        // | | |a| |
+        // | |s| | |
+        let diag_up_min_dist = u32::min(self.height - 1 - last_move.row, last_move.col);
+        let diag_up_start = Coords {
+            row: last_move.row + diag_up_min_dist,
+            col: last_move.col - diag_up_min_dist,
+        };
 
-        for c in 0..self.width() {
-            // Check cols
-            match count_equal(
-                &self,
-                &Coord { row: 0, col: c },
-                &Coord { row: 1, col: 0 },
-                num_winner,
-            ) {
-                Ok(Cell::Empty) => (),
-                Ok(w) => return Ok(w),
-                Err(e) => return Err(e),
-            }
-        }
-
-        // Start at (num_winner - 1) to skip diagonals with too few items
-        for r in (num_winner - 1)..self.height() {
-            // Check diagonal up (part 1)
-            match count_equal(
-                &self,
-                &Coord { row: r, col: 0 },
-                &Coord { row: -1, col: 1 },
-                num_winner,
-            ) {
-                Ok(Cell::Empty) => (),
-                Ok(w) => return Ok(w),
-                Err(e) => return Err(e),
-            }
-        }
-
-        // Column 0 is part of the block above
-        // Also skip diagonals with less than num_winner items
-        for c in 1..(self.width() - (num_winner - 1)) {
-            // Check diagonal up (part 2)
-            match count_equal(
-                &self,
-                &Coord {
-                    row: self.height() - 1,
-                    col: c,
+        let pos_d_pos_pairs = vec![
+            (
+                // Horizontal
+                Coords {
+                    row: last_move.row,
+                    col: 0,
                 },
-                &Coord { row: -1, col: 1 },
-                num_winner,
-            ) {
-                Ok(Cell::Empty) => (),
-                Ok(w) => return Ok(w),
-                Err(e) => return Err(e),
-            }
+                DeltaCoords { row: 0, col: 1 },
+            ),
+            (
+                // Vertical
+                Coords {
+                    row: 0,
+                    col: last_move.col,
+                },
+                DeltaCoords { row: 1, col: 0 },
+            ),
+            (
+                // Diagonal down
+                diag_down_start,
+                DeltaCoords { row: 1, col: 1 },
+            ),
+            (
+                // Diagonal up
+                diag_up_start,
+                DeltaCoords { row: -1, col: 1 },
+            ),
+        ];
+
+        for (pos, d_pos) in pos_d_pos_pairs {
+            let line_winner = side_with_min_equal(&self, &pos, &d_pos, num_winner);
+            match line_winner {
+                Cell::Empty => continue,
+                side => return side,
+            };
         }
 
-        // Skip diagonals with less than num_winner items on the diagonal
-        for c in 0..(self.width() - (num_winner - 1)) {
-            // Check diagonal down (part 1)
-            match count_equal(
-                &self,
-                &Coord { row: 0, col: c },
-                &Coord { row: 1, col: 1 },
-                num_winner,
-            ) {
-                Ok(Cell::Empty) => (),
-                Ok(w) => return Ok(w),
-                Err(e) => return Err(e),
-            }
-        }
-
-        // Row 0 is part of the block above
-        // Also skip diagonals with less than num_winner items
-        for r in 1..(self.height() - (num_winner - 1)) {
-            // Check diagonal down (part 2)
-            match count_equal(
-                &self,
-                &Coord { row: r, col: 0 },
-                &Coord { row: 1, col: 1 },
-                num_winner,
-            ) {
-                Ok(Cell::Empty) => (),
-                Ok(w) => return Ok(w),
-                Err(e) => return Err(e),
-            }
-        }
-
-        Ok(Cell::Empty)
+        Cell::Empty
     }
 }
 
-/// Return which player if any has `num_winner` tokens in a row starting from `row` and `col` and
-/// counting in the direction of `d_row` and `d_col`.
-///
-/// # Arguments
-///
-/// * `board` - A borrow to a board to evaluate.
-/// * `pos` - A borrow to the `Coord` of the position to start at.
-/// * `d_pos` - A borrow to the `Coord` of delta values for iterating from the start position.
-/// * `num_winner` - The number of tokens required to win.
-///
-/// Returns the token of the player that won and `Cell::Empty` if nobody won.
-fn count_equal(
-    board: &Board,
-    pos: &Coord,
-    d_pos: &Coord,
-    num_winner: i32,
-) -> Result<Cell, &'static str> {
+fn side_with_min_equal(board: &Board, pos: &Coords, d_pos: &DeltaCoords, num_winner: i32) -> Cell {
     let mut count = 0;
     let mut marker = Cell::Empty;
 
-    let Coord {
+    let Coords {
         row: mut cur_row,
         col: mut cur_col,
     } = pos;
 
     while board.in_bounds(cur_row, cur_col) {
-        let cur_marker = board.get_cell(cur_row, cur_col)?;
+        let cur_marker = board.get_cell(cur_row, cur_col).unwrap();
         if cur_marker == marker {
             count += 1;
         } else {
@@ -246,82 +219,37 @@ fn count_equal(
         }
 
         if (count >= num_winner) && (marker != Cell::Empty) {
-            return Ok(marker);
+            return marker;
         }
 
-        cur_row = cur_row + d_pos.row;
-        cur_col = cur_col + d_pos.col;
+        cur_row = (cur_row as i32 + d_pos.row) as u32;
+        cur_col = (cur_col as i32 + d_pos.col) as u32;
     }
 
-    Ok(Cell::Empty)
+    Cell::Empty
 }
 
 #[cfg(test)]
+
 mod test {
 
-    use super::{Board, Cell};
+    use super::{Board, Cell, Coords};
 
     #[test]
-    fn test_new_board() {
-        let b = Board::new(3, 3);
-        assert_eq!(b.width, 3);
-        assert_eq!(b.height, 3);
-        assert_eq!(b.cells.len(), 9);
+    fn test_get_coords() {
+        let board = Board::new(4, 3);
 
-        let large_b = Board::new(7, 10);
-        assert_eq!(large_b.width, 7);
-        assert_eq!(large_b.height, 10);
-        assert_eq!(large_b.cells.len(), 70);
-    }
-
-    #[test]
-    fn test_set_cell() {
-        let mut b = Board::new(3, 3);
-        for cell in b.cells.iter() {
-            assert_eq!(*cell, Cell::Empty);
-        }
-
-        let mut res = b.set_cell(1, 1, Cell::X);
-        assert_eq!(res, Ok(()));
-        assert_eq!(b.cells[b.get_index(1, 1)], Cell::X);
-
-        res = b.set_cell(1, 1, Cell::O);
-        assert_eq!(res, Err("Cell to set is not empty"));
-        assert_eq!(b.cells[b.get_index(1, 1)], Cell::X);
-
-        res = b.set_cell(2, 1, Cell::O);
-        assert_eq!(res, Ok(()));
-        assert_eq!(b.cells[b.get_index(2, 1)], Cell::O);
-    }
-
-    #[test]
-    fn test_set_state() {
-        let mut b = Board::new(3, 3);
-        for cell in b.cells.iter() {
-            assert_eq!(*cell, Cell::Empty);
-        }
-
-        let new_state = vec![
-            Cell::X,
-            Cell::O,
-            Cell::Empty,
-            Cell::X,
-            Cell::Empty,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::Empty,
-        ];
-        let res = b.set_state(new_state.clone());
-        assert_eq!(res, Ok(()));
-
-        for (i, cell) in b.cells.iter().enumerate() {
-            assert_eq!(*cell, new_state[i]);
+        for (idx, coords) in vec![
+            (0, Coords { row: 0, col: 0 }),
+            (1, Coords { row: 0, col: 1 }),
+            (6, Coords { row: 1, col: 2 }),
+        ] {
+            assert_eq!(board.get_coords(idx), coords);
         }
     }
 
     #[test]
-    fn test_line_count_winner() -> Result<(), &'static str> {
+    fn test_line_winner() {
         let mut b1 = Board::new(3, 3);
         // XO
         // OXO
@@ -338,193 +266,8 @@ mod test {
             Cell::X,
         ]);
 
-        let res = b1.line_count_winner(3)?;
-        assert_eq!(res, Cell::X);
+        let last_move_coords = Coords { row: 1, col: 1 };
 
-        let mut b12 = Board::new(3, 3);
-        //   X
-        // OXO
-        // X
-        let _ = b12.set_state(vec![
-            Cell::Empty,
-            Cell::Empty,
-            Cell::X,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::X,
-            Cell::Empty,
-            Cell::Empty,
-        ]);
-
-        let res = b1.line_count_winner(3)?;
-        assert_eq!(res, Cell::X);
-
-        let mut b2 = Board::new(3, 3);
-        // XOX
-        // OOO
-        //  X
-        let _ = b2.set_state(vec![
-            Cell::X,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::O,
-            Cell::O,
-            Cell::Empty,
-            Cell::X,
-            Cell::Empty,
-        ]);
-
-        let res = b2.line_count_winner(3)?;
-        assert_eq!(res, Cell::O);
-
-        let mut b3 = Board::new(3, 3);
-        // XOX
-        // OXO
-        //  X
-        let _ = b3.set_state(vec![
-            Cell::X,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::Empty,
-            Cell::X,
-            Cell::Empty,
-        ]);
-
-        let res = b3.line_count_winner(3)?;
-        assert_eq!(res, Cell::Empty);
-
-        let mut b4 = Board::new(5, 4);
-        //   OXO
-        // OOXOX
-        // OXOOX
-        // XXXOX
-        let _ = b4.set_state(vec![
-            Cell::Empty,
-            Cell::Empty,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::O,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::O,
-            Cell::X,
-            Cell::X,
-            Cell::X,
-            Cell::X,
-            Cell::O,
-            Cell::X,
-        ]);
-
-        let res = b4.line_count_winner(4)?;
-        assert_eq!(res, Cell::X);
-
-        let mut b5 = Board::new(5, 4);
-        //  X
-        //  OX
-        //  OOX
-        //  OXOX
-        let _ = b5.set_state(vec![
-            Cell::Empty,
-            Cell::X,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::O,
-            Cell::X,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::O,
-            Cell::O,
-            Cell::X,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::O,
-            Cell::X,
-            Cell::O,
-            Cell::X,
-        ]);
-
-        let res = b5.line_count_winner(4)?;
-        assert_eq!(res, Cell::X);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_fiar_diagonal_winner() -> Result<(), &'static str> {
-        let mut b1 = Board::new(7, 6);
-        //
-        //
-        // X
-        // OX
-        // OOX
-        // XOOXX
-        let _ = b1.set_state(vec![
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            //
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            //
-            Cell::X,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            //
-            Cell::O,
-            Cell::X,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            //
-            Cell::O,
-            Cell::O,
-            Cell::X,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            Cell::Empty,
-            //
-            Cell::X,
-            Cell::O,
-            Cell::O,
-            Cell::X,
-            Cell::X,
-            Cell::Empty,
-            Cell::Empty,
-        ]);
-
-        let res = b1.line_count_winner(4)?;
-        assert_eq!(res, Cell::X);
-
-        Ok(())
+        assert_eq!(b1.line_winner(&last_move_coords, 3), Cell::X);
     }
 }
