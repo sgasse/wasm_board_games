@@ -1,34 +1,5 @@
-use serde::{Deserialize, Serialize};
+use crate::{Cell, Coords, DeltaCoords};
 use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
-pub enum Cell {
-    Empty,
-    X,
-    O,
-}
-
-#[wasm_bindgen]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Coords {
-    pub row: u32,
-    pub col: u32,
-}
-
-#[wasm_bindgen]
-impl Coords {
-    pub fn new(row: u32, col: u32) -> Self {
-        Self { row, col }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct DeltaCoords {
-    pub row: i32,
-    pub col: i32,
-}
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, PartialEq)]
@@ -62,7 +33,7 @@ impl Board {
 
 #[wasm_bindgen]
 impl Board {
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new(height: u32, width: u32) -> Self {
         Board {
             cells: vec![Cell::Empty; (width * height) as usize],
             width,
@@ -237,7 +208,7 @@ mod test {
 
     #[test]
     fn test_get_coords() {
-        let board = Board::new(4, 3);
+        let board = Board::new(3, 4);
 
         for (idx, coords) in vec![
             (0, Coords { row: 0, col: 0 }),

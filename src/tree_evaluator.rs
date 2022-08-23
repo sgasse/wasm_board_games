@@ -8,7 +8,10 @@ pub struct TreeEvaluator<T> {
     avg_values: Vec<i32>,
 }
 
-impl<'a, T: GameState> TreeEvaluator<T> {
+impl<'a, T> TreeEvaluator<T>
+where
+    T: GameState + Default,
+{
     pub fn new(init_state: T) -> TreeEvaluator<T> {
         TreeEvaluator {
             parent: vec![0],
@@ -16,6 +19,11 @@ impl<'a, T: GameState> TreeEvaluator<T> {
             game_states: vec![init_state],
             avg_values: vec![0],
         }
+    }
+
+    pub fn new_with_default() -> TreeEvaluator<T> {
+        let init_state = T::default();
+        Self::new(init_state)
     }
 
     pub fn expand_and_get_children_idx(&mut self, idx_to_expand: &Vec<usize>) -> Vec<usize> {
@@ -165,15 +173,7 @@ impl<'a, T> Iterator for BfsIterator<'a, T> {
 
 #[cfg(test)]
 mod test {
-    use crate::{board::Coords, X_WIN_VALUE};
-
-    use super::{
-        super::{
-            board::{Board, Cell},
-            t3_game::{T3GameState, T3Move},
-        },
-        TreeEvaluator,
-    };
+    use crate::{Board, BoardMove, Cell, Coords, T3GameState, TreeEvaluator, X_WIN_VALUE};
 
     fn get_ref_state() -> T3GameState {
         let mut b1 = Board::new(3, 3);
@@ -194,7 +194,7 @@ mod test {
 
         T3GameState::new(
             b1,
-            T3Move {
+            BoardMove {
                 coords: Coords { row: 2, col: 2 },
                 side: Cell::O,
             },

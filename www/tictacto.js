@@ -1,5 +1,5 @@
 // Make WASM structs available
-const { Board, Cell, T3Move, Coords } = wasm_bindgen
+const { Board, Cell, BoardMove, Coords } = wasm_bindgen
 
 const BOARD_GAP_SIZE = 4
 const BOARD_PADDING = 4
@@ -119,7 +119,7 @@ function setupWorker() {
   worker.onmessage = async (event) => {
     if (event.data.kind == 'best_move') {
       if (gameActive) {
-        const bestMove = T3Move.from_js_value(event.data.bestMove)
+        const bestMove = BoardMove.from_js_value(event.data.bestMove)
         setFieldWithCoords(bestMove.coords)
         drawBoardFields()
         console.log('Got best move', bestMove, 'from worker')
@@ -148,7 +148,7 @@ async function run_wasm() {
   drawBoardFields()
   setupButtons()
 
-  lastMove = T3Move.new(0, 0, Cell.O)
+  lastMove = BoardMove.new(0, 0, Cell.O)
   setupWorker()
 }
 
