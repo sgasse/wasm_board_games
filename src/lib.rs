@@ -1,12 +1,17 @@
 mod board;
+mod common;
+mod fiar_game;
 mod game_interface;
 mod t3_game;
 mod tree_evaluator;
 
 pub use {
-    board::{Board, Cell},
-    game_interface::{ExpandResult, T3GameInterface},
-    t3_game::T3Move,
+    board::Board,
+    common::{BoardMove, Cell, Coords, DeltaCoords},
+    fiar_game::FiarGameState,
+    game_interface::{ExpandResult, FiarGameInterface, T3GameInterface},
+    t3_game::T3GameState,
+    tree_evaluator::TreeEvaluator,
 };
 
 pub const X_WIN_VALUE: i32 = 1000000;

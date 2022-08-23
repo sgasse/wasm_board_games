@@ -1,6 +1,6 @@
 importScripts('./pkg/wasm_board_games.js')
 
-const { T3GameInterface, T3Move, ExpandResult } = wasm_bindgen
+const { T3GameInterface, BoardMove, ExpandResult } = wasm_bindgen
 
 async function run_worker() {
   await wasm_bindgen('./pkg/wasm_board_games_bg.wasm')
@@ -39,7 +39,7 @@ async function run_worker() {
     const kind = event.data.kind
     if (kind == 'track_move') {
       runBetweenExpansion(() => {
-        const lastMove = T3Move.from_js_value(event.data.lastMove)
+        const lastMove = BoardMove.from_js_value(event.data.lastMove)
         gameIf.track_move(lastMove)
       })
     } else if (kind == 'reset') {

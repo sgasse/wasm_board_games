@@ -1,64 +1,38 @@
-use super::board::{Board, Cell, Coords};
-use super::GameState;
-use super::X_WIN_VALUE;
-use serde::{Deserialize, Serialize};
+use crate::{Board, BoardMove, Cell, Coords, GameState, X_WIN_VALUE};
 use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
-pub struct T3Move {
-    pub coords: Coords,
-    pub side: Cell,
-}
-
-#[wasm_bindgen]
-impl T3Move {
-    pub fn new(row: u32, col: u32, side: Cell) -> Self {
-        Self {
-            coords: Coords { row, col },
-            side,
-        }
-    }
-
-    pub fn from_js_value(js_value: JsValue) -> Self {
-        js_value.into_serde().unwrap()
-    }
-
-    pub fn to_js_value(&self) -> JsValue {
-        JsValue::from_serde(&self).unwrap()
-    }
-}
 
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct T3GameState {
     board: Board,
-    last_move: T3Move,
+    last_move: BoardMove,
 }
 
 #[wasm_bindgen]
 impl T3GameState {
-    pub fn new(board: Board, last_move: T3Move) -> Self {
+    pub fn new(board: Board, last_move: BoardMove) -> Self {
         Self { board, last_move }
-    }
-
-    pub fn default() -> Self {
-        Self {
-            board: Board::new(3, 3),
-            last_move: T3Move {
-                coords: Coords { row: 0, col: 0 },
-                // We usually start with X, so the "last" was O
-                side: Cell::O,
-            },
-        }
     }
 
     pub fn side(&self) -> Cell {
         self.last_move.side
     }
 
-    pub fn last_move(&self) -> T3Move {
+    pub fn last_move(&self) -> BoardMove {
         self.last_move
+    }
+}
+
+impl Default for T3GameState {
+    fn default() -> Self {
+        Self {
+            board: Board::new(3, 3),
+            last_move: BoardMove {
+                coords: Coords { row: 0, col: 0 },
+                // We usually start with X, so the "last" was O
+                side: Cell::O,
+            },
+        }
     }
 }
 
@@ -83,7 +57,7 @@ impl GameState for T3GameState {
 
                     return Some(T3GameState {
                         board: new_board,
-                        last_move: T3Move {
+                        last_move: BoardMove {
                             coords: Coords { row, col },
                             side: next_side.clone(),
                         },
@@ -108,8 +82,8 @@ impl GameState for T3GameState {
 #[cfg(test)]
 mod test {
 
+    use super::BoardMove;
     use super::Cell;
-    use super::T3Move;
     use super::{Board, Coords, GameState, T3GameState};
 
     #[test]
@@ -132,7 +106,7 @@ mod test {
 
         let game_state = T3GameState {
             board: b1,
-            last_move: T3Move {
+            last_move: BoardMove {
                 coords: Coords { row: 2, col: 2 },
                 side: Cell::O,
             },
