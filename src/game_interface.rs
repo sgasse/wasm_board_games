@@ -13,7 +13,7 @@ macro_rules! gen_game_if_impl {
         #[wasm_bindgen]
         impl $game_if {
             pub fn new() -> Self {
-                console::log_1(&"Initialized a new T3GameInterface".into());
+                console::log_1(&"Initialized a new GameInterface".into());
                 Self {
                     tree_eval: TreeEvaluator::new_with_default(),
                     last_move_idx: 0,
