@@ -12,6 +12,7 @@ var lastMove = null
 var gWorker = null
 var gameActive = true
 
+// Setup a board with the given number of rows and columns.
 function setupBoard(rows, cols) {
   const numFields = rows * cols
   createFields(numFields)
@@ -27,6 +28,7 @@ function setupBoard(rows, cols) {
   boardDiv.style.padding = `${BOARD_PADDING}px`
 }
 
+// Create field HTML elements dynamically based on the number of fields.
 function createFields(numFields) {
   for (var i = 0; i < numFields; i++) {
     const fieldDiv = document.createElement('div')
@@ -40,6 +42,7 @@ function createFields(numFields) {
   }
 }
 
+// Receive click on field.
 function clickField(clickObj) {
   const idx = parseInt(clickObj.target.id.split('_')[1], 10)
   setFieldWithIdx(idx)
@@ -47,11 +50,13 @@ function clickField(clickObj) {
   gWorker.postMessage({ kind: 'track_move', lastMove: lastMove.to_js_value() })
 }
 
+// Set field with index into all generated fields.
 function setFieldWithIdx(idx) {
   const coords = gBoard.get_coords(idx)
   setFieldWithCoords(coords)
 }
 
+// Set field with row/column coordinates.
 function setFieldWithCoords(coords) {
   if (gameActive) {
     lastMove.coords = coords
@@ -67,6 +72,7 @@ function setFieldWithCoords(coords) {
   }
 }
 
+// Check if any side won after the last move and update the game if so.
 function checkWinner(winner) {
   if (winner == Cell.X || winner == Cell.O) {
     gameActive = false
@@ -75,6 +81,7 @@ function checkWinner(winner) {
   }
 }
 
+// Draw the HTML fields according to the board.
 function drawBoardFields() {
   for (let i = 0; i < gBoard.width() * gBoard.height(); i++) {
     const cell = gCells[i]
@@ -93,7 +100,8 @@ function drawBoardFields() {
   }
 }
 
-function setupButtons() {
+// Setup the callback functions of the board.
+function setupButtons(resetText) {
   const resetButton = document.getElementById('reset-button')
   resetButton.onclick = () => {
     gBoard.reset()
@@ -102,7 +110,7 @@ function setupButtons() {
     lastMove.coords.col = 0
     lastMove.side = Cell.O
     drawBoardFields()
-    document.getElementById('notification').innerText = 'Tic Tac To'
+    document.getElementById('notification').innerText = resetText
     gameActive = true
   }
 
@@ -114,8 +122,11 @@ function setupButtons() {
   }
 }
 
-function setupWorker() {
-  const worker = new Worker('./ttt_worker.js')
+// Setup the worker precalculating possible next moves and their avg. values.
+function setupWorker(workerFile) {
+  const worker = new Worker(workerFile)
+
+  // Set on-message callback of worker
   worker.onmessage = async (event) => {
     if (event.data.kind == 'best_move') {
       if (gameActive) {
@@ -126,30 +137,35 @@ function setupWorker() {
       }
     }
   }
+
+  // Make worker available as global variable
   gWorker = worker
 }
 
-async function run_wasm() {
+// Run main WASM entry point loading WASM code and triggering the setup.
+async function run_wasm(row, col, workerFile, resetText) {
   const rustWasm = await wasm_bindgen('./pkg/wasm_board_games_bg.wasm')
   console.log('WASM loaded')
   console.log(rustWasm.memory)
 
-  var board = Board.new(3, 3)
+  // Create new board as WASM object
+  var board = Board.new(row, col)
+
+  // Create array to directly access board cells in WASM memory from JS
   const cells = new Uint8Array(
     rustWasm.memory.buffer,
     board.cells_ptr(),
     board.width() * board.height(),
   )
 
+  // Make board and cells available as global variables
   gBoard = board
   gCells = cells
 
-  setupBoard(3, 3)
+  setupBoard(board.height(), board.width())
   drawBoardFields()
-  setupButtons()
+  setupButtons(resetText)
 
   lastMove = BoardMove.new(0, 0, Cell.O)
-  setupWorker()
+  setupWorker(workerFile)
 }
-
-run_wasm()

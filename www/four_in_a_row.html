@@ -1,33 +1,29 @@
 <html>
-
-<head>
+  <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
-    <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-<body>
-    <div id=wrapper>
-        <!-- use &nbsp; to keep an empty div open-->
-        <div id="notification">Four in a row</div>
-        <canvas id="board"></canvas>
-
-        <button id="resetButton" class="button">Reset</button>
-        <button id="aiMove" class="button">AI move</button>
+  <body>
+    <div id="content-wrapper" class="rounded-corners">
+      <div class="header">
+        <div id="notification" class="rounded-corners">Four in a row</div>
+      </div>
+      <div class="board-container">
+        <div id="board" class="rounded-corners"></div>
+      </div>
+      <div class="footer">
+        <button id="reset-button" class="button rounded-corners">Reset</button>
+        <button id="ai-move-button" class="button rounded-corners">
+          AI move
+        </button>
+      </div>
     </div>
 
-    <script src='./pkg/wasm_board_games.js'></script>
+    <script src="./pkg/wasm_board_games.js"></script>
+    <script src="./common.js"></script>
     <script>
-        const { run_four_in_a_row } = wasm_bindgen;
-
-        async function run() {
-            await wasm_bindgen('./pkg/wasm_board_games_bg.wasm');
-
-            run_four_in_a_row();
-        }
-
-        run();
+      run_wasm(7, 6, './four_in_a_row_worker.js', 'Four in a row')
     </script>
-
-</body>
-
+  </body>
 </html>
