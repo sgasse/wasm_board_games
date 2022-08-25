@@ -24,8 +24,9 @@ body {
 }
 
 #content-wrapper {
-    height: 600px;
-    width: 400px;
+    /* height: 600px;
+    width: 400px; */
+    gap: 30px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -55,7 +56,7 @@ body {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    gap: 16px;
+    gap: 30px;
 }
 
 #board {
@@ -95,7 +96,7 @@ body {
     background-color: var(--color3);
     border: none;
     padding: 10px;
-    font-size: 5vmin;
+    font-size: 20px;
     width: 100%;
 }
 

@@ -64,29 +64,6 @@ macro_rules! gen_game_if_impl {
                 }
             }
 
-            fn identify_move(&self, game_move: &BoardMove) -> Option<usize> {
-                let direct_children = self
-                    .tree_eval
-                    .children()
-                    .get(self.last_move_idx)
-                    .expect("Direct children");
-
-                let game_states = direct_children.iter().map(|&child_idx| {
-                    self.tree_eval
-                        .game_states()
-                        .get(child_idx)
-                        .expect("Child game state")
-                });
-
-                for (&child_idx, game_state) in direct_children.iter().zip(game_states) {
-                    if *game_move == game_state.last_move() {
-                        return Some(child_idx);
-                    }
-                }
-
-                None
-            }
-
             pub fn get_best_move(&mut self) -> BoardMove {
                 // Evaluate value of all direct child states
                 self.tree_eval.evaluate_states(self.last_move_idx);
@@ -121,6 +98,29 @@ macro_rules! gen_game_if_impl {
                 self.expand_new_idx = vec![0];
                 self.cur_expanded_depth = 0;
                 self.max_expanded_depth = $max_depth;
+            }
+
+            fn identify_move(&self, game_move: &BoardMove) -> Option<usize> {
+                let direct_children = self
+                    .tree_eval
+                    .children()
+                    .get(self.last_move_idx)
+                    .expect("Direct children");
+
+                let game_states = direct_children.iter().map(|&child_idx| {
+                    self.tree_eval
+                        .game_states()
+                        .get(child_idx)
+                        .expect("Child game state")
+                });
+
+                for (&child_idx, game_state) in direct_children.iter().zip(game_states) {
+                    if *game_move == game_state.last_move() {
+                        return Some(child_idx);
+                    }
+                }
+
+                None
             }
 
             fn identify_best_move(&self) -> (usize, i32) {

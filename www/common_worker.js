@@ -76,5 +76,3 @@ async function run_worker(gameName) {
   // Kick off initial expansion
   setTimeout(expandGraph, 1)
 }
-
-// run_worker()
