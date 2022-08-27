@@ -39,7 +39,6 @@ function createFields(numFields) {
     fieldDiv.style.height = `${CELL_SIZE}px`
     fieldDiv.onclick = clickField
     document.getElementById('board').appendChild(fieldDiv)
-    console.log('Added element', i)
   }
 }
 
@@ -134,7 +133,6 @@ function setupWorker(workerFile) {
         const bestMove = BoardMove.from_js_value(event.data.bestMove)
         setFieldWithCoords(bestMove.coords)
         drawBoardFields()
-        console.log('Got best move', bestMove, 'from worker')
       }
     }
   }
