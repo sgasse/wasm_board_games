@@ -12,6 +12,7 @@ var lastMove = null
 var gWorker = null
 var gameActive = true
 var gNumWinner = 3
+var gWasmMemory = null
 
 // Setup a board with the given number of rows and columns.
 function setupBoard(rows, cols) {
@@ -146,6 +147,8 @@ async function run_wasm(row, col, numWinner, workerFile, resetText) {
   const rustWasm = await wasm_bindgen('./pkg/wasm_board_games_bg.wasm')
   console.log('WASM loaded')
   console.log(rustWasm.memory)
+
+  gWasmMemory = rustWasm.memory
 
   // Create new board as WASM object
   var board = Board.new(row, col)
