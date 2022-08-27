@@ -1,5 +1,6 @@
 use super::{GameState, X_WIN_VALUE};
 use std::collections::VecDeque;
+use web_sys::console;
 
 pub struct TreeEvaluator<T> {
     parent: Vec<usize>,
@@ -34,6 +35,8 @@ where
                 expanded_children.append(&mut Vec::from(children_idx));
             }
         }
+
+        console::log_1(&format!("Generated {} new nodes", expanded_children.len()).into());
 
         expanded_children
     }
@@ -143,7 +146,7 @@ where
         }
     }
 
-    fn bfs_iter(&'a self, start_idx: usize) -> BfsIterator<'a, T> {
+    pub fn bfs_iter(&'a self, start_idx: usize) -> BfsIterator<'a, T> {
         BfsIterator {
             tree_eval: &self,
             buffer: VecDeque::from([start_idx]),
