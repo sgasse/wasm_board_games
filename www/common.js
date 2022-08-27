@@ -11,6 +11,7 @@ var gCells = null
 var lastMove = null
 var gWorker = null
 var gameActive = true
+var gNumWinner = 3
 
 // Setup a board with the given number of rows and columns.
 function setupBoard(rows, cols) {
@@ -67,7 +68,7 @@ function setFieldWithCoords(coords) {
       `Set field row ${lastMove.coords.row} col ${lastMove.coords.col}`,
     )
 
-    const winner = gBoard.line_winner(lastMove.coords, 3)
+    const winner = gBoard.line_winner(lastMove.coords, gNumWinner)
     checkWinner(winner)
   }
 }
@@ -143,7 +144,7 @@ function setupWorker(workerFile) {
 }
 
 // Run main WASM entry point loading WASM code and triggering the setup.
-async function run_wasm(row, col, workerFile, resetText) {
+async function run_wasm(row, col, numWinner, workerFile, resetText) {
   const rustWasm = await wasm_bindgen('./pkg/wasm_board_games_bg.wasm')
   console.log('WASM loaded')
   console.log(rustWasm.memory)
@@ -161,6 +162,8 @@ async function run_wasm(row, col, workerFile, resetText) {
   // Make board and cells available as global variables
   gBoard = board
   gCells = cells
+
+  gNumWinner = numWinner
 
   setupBoard(board.height(), board.width())
   drawBoardFields()
