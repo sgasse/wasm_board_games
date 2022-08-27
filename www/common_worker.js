@@ -51,7 +51,6 @@ async function run_worker(gameName) {
 
   // Handle incoming messages
   self.onmessage = async (event) => {
-    console.log('Got message', event.data)
     const kind = event.data.kind
     if (kind == 'track_move') {
       runBetweenExpansion(() => {
