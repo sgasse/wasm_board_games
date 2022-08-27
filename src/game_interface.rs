@@ -48,6 +48,36 @@ macro_rules! gen_game_if_impl {
                 }
             }
 
+            fn get_unexpanded_leafs(&self, start_idx: usize) -> Vec<usize> {
+                self.tree_eval
+                    .bfs_iter(start_idx)
+                    .filter(|&idx| {
+                        // Check first for the existence of childen - this will weed out
+                        // 90% of the nodes.
+                        if let Some(children) = self.tree_eval.children().get(idx) {
+                            if !children.is_empty() {
+                                // Skip node that already has children
+                                return false;
+                            }
+
+                            // If children are empty, check if the position value
+                            // indicates a final state.
+                            if let Some(&avg_value) = self.tree_eval.avg_values().get(idx) {
+                                if avg_value != X_WIN_VALUE && avg_value != -X_WIN_VALUE {
+                                    // No children and no terminal value -> this node
+                                    // should be expanded.
+                                    return true;
+                                }
+                            }
+                        }
+
+                        // Fallback - either no children but terminal position value or
+                        // error in retrieving children / avg values.
+                        return false;
+                    })
+                    .collect()
+            }
+
             pub fn track_move(&mut self, game_move: BoardMove) -> bool {
                 match self.identify_move(&game_move) {
                     Some(idx) => {
@@ -55,6 +85,10 @@ macro_rules! gen_game_if_impl {
                         // Update tracking values in game interface
                         self.last_move_idx = idx;
                         self.cur_expanded_depth -= 1;
+
+                        // We want to expand only those leaf nodes that are reachable from
+                        // the new last move.
+                        self.expand_new_idx = self.get_unexpanded_leafs(self.last_move_idx);
                         return true;
                     }
                     None => {
@@ -87,6 +121,10 @@ macro_rules! gen_game_if_impl {
                 // Update tracking values in game interface
                 self.last_move_idx = best_idx;
                 self.cur_expanded_depth -= 1;
+
+                // We want to expand only those leaf nodes that are reachable from
+                // the new last move.
+                self.expand_new_idx = self.get_unexpanded_leafs(self.last_move_idx);
 
                 best_move
             }
