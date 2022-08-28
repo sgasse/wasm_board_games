@@ -23,6 +23,16 @@
     <script src="./pkg/wasm_board_games.js"></script>
     <script src="./common.js"></script>
     <script>
+      // Receive click on field.
+      function clickField(clickObj) {
+        const idx = parseInt(clickObj.target.id.split('_')[1], 10)
+        const clickedCoords = gBoard.get_coords(idx)
+        const fiarCoords = gBoard.first_empty_in_column(clickedCoords.col)
+
+        setFieldWithCoords(fiarCoords)
+        drawBoardFields()
+      }
+
       run_wasm(6, 7, 4, './four_in_a_row_worker.js', 'Four in a row')
     </script>
   </body>

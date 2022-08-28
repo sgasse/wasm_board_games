@@ -169,6 +169,16 @@ impl Board {
 
         Cell::Empty
     }
+
+    pub fn first_empty_in_column(&self, col: u32) -> Coords {
+        for row in (0..self.height()).rev() {
+            if let Ok(Cell::Empty) = self.get_cell(row, col) {
+                return Coords { row, col };
+            }
+        }
+
+        Coords { row: 0, col }
+    }
 }
 
 fn side_with_min_equal(board: &Board, pos: &Coords, d_pos: &DeltaCoords, num_winner: i32) -> Cell {
