@@ -43,20 +43,6 @@ function createFields(numFields) {
   }
 }
 
-// Receive click on field.
-function clickField(clickObj) {
-  const idx = parseInt(clickObj.target.id.split('_')[1], 10)
-  setFieldWithIdx(idx)
-  drawBoardFields()
-  gWorker.postMessage({ kind: 'track_move', lastMove: lastMove.to_js_value() })
-}
-
-// Set field with index into all generated fields.
-function setFieldWithIdx(idx) {
-  const coords = gBoard.get_coords(idx)
-  setFieldWithCoords(coords)
-}
-
 // Set field with row/column coordinates.
 function setFieldWithCoords(coords) {
   if (gameActive) {
@@ -67,6 +53,11 @@ function setFieldWithCoords(coords) {
     console.log(
       `Set field row ${lastMove.coords.row} col ${lastMove.coords.col}`,
     )
+
+    gWorker.postMessage({
+      kind: 'track_move',
+      lastMove: lastMove.to_js_value(),
+    })
 
     const winner = gBoard.line_winner(lastMove.coords, gNumWinner)
     checkWinner(winner)
