@@ -23,9 +23,12 @@ body {
     color: var(--color4);
 }
 
+#wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
 #content-wrapper {
-    /* height: 600px;
-    width: 400px; */
     gap: 30px;
     display: flex;
     flex-direction: column;
