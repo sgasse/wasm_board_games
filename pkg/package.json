@@ -1,0 +1,21 @@
+{
+  "name": "wasm_board_games",
+  "collaborators": [
+    "Simon B. Gasse"
+  ],
+  "description": "TicTacTo and Four-in-a-row in Rust WASM with web-worker",
+  "version": "0.3.0",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sgasse/wasm_board_games"
+  },
+  "files": [
+    "wasm_board_games_bg.wasm",
+    "wasm_board_games.js",
+    "wasm_board_games.d.ts",
+    "LICENSE-APACHE"
+  ],
+  "browser": "wasm_board_games.js",
+  "types": "wasm_board_games.d.ts"
+}
