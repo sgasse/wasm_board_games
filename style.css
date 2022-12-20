@@ -1,0 +1,128 @@
+:root {
+    --corner-radius: 8px;
+    --color1: #734656;
+    --color2: #1b1626;
+    --color3: #2a2640;
+    --color4: #f29544;
+    --color5: #a64e46;
+}
+
+body {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color2);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 10vmin;
+    color: var(--color4);
+}
+
+#wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+#content-wrapper {
+    gap: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: var(--corner-radius);
+    background-color: var(--color2);
+}
+
+.rounded-corners {
+    border-radius: var(--corner-radius);
+}
+
+.header {
+    width: 100%;
+    height: 80px;
+}
+
+.board-container {
+    width: 100%;
+    height: auto;
+    display: flex;
+    justify-content: center;
+}
+
+.footer {
+    width: 100%;
+    height: 80px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+#board {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    background-color: var(--color3);
+    justify-content: center;
+}
+
+.board-field {
+    background-color: var(--color1);
+    font-size: 50px;
+    text-align: center;
+    transition: background-color 0.5s;
+}
+
+.board-field-set {
+    background-color: var(--color1);
+    font-size: 50px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.5s;
+}
+
+.board-field-set:hover {
+    background-color: var(--color2);
+}
+
+.board-field:hover {
+    background-color: var(--color4);
+    cursor: pointer;
+}
+
+.button {
+    color: var(--color4);
+    background-color: var(--color3);
+    border: none;
+    padding: 10px;
+    font-size: 20px;
+    width: 100%;
+    transition: background-color 0.5s;
+}
+
+.button:hover {
+    color: var(--color3);
+    background-color: var(--color4);
+    cursor: pointer;
+}
+
+a {
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+#notification {
+    background-color: var(--color3);
+    border: none;
+    padding: 10px;
+    font-size: 5vmin;
+    text-align: center;
+    white-space: nowrap;
+}

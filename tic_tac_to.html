@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div id="content-wrapper" class="rounded-corners">
+      <div class="header">
+        <div id="notification" class="rounded-corners">Tic Tac To</div>
+      </div>
+      <div class="board-container">
+        <div id="board" class="rounded-corners"></div>
+      </div>
+      <div class="footer">
+        <button id="reset-button" class="button rounded-corners">Reset</button>
+        <button id="ai-move-button" class="button rounded-corners">
+          AI move
+        </button>
+      </div>
+    </div>
+
+    <script src="./pkg/wasm_board_games.js"></script>
+    <script src="./common.js"></script>
+    <script>
+      // Receive click on field.
+      function clickField(clickObj) {
+        const idx = parseInt(clickObj.target.id.split('_')[1], 10)
+        const coords = gBoard.get_coords(idx)
+        setFieldWithCoords(coords)
+        drawBoardFields()
+      }
+
+      run_wasm(3, 3, 3, './tic_tac_to_worker.js', 'Tic Tac To')
+    </script>
+  </body>
+</html>

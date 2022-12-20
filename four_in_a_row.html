@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div id="content-wrapper" class="rounded-corners">
+      <div class="header">
+        <div id="notification" class="rounded-corners">Four in a row</div>
+      </div>
+      <div class="board-container">
+        <div id="board" class="rounded-corners"></div>
+      </div>
+      <div class="footer">
+        <button id="reset-button" class="button rounded-corners">Reset</button>
+        <button id="ai-move-button" class="button rounded-corners">
+          AI move
+        </button>
+      </div>
+    </div>
+
+    <script src="./pkg/wasm_board_games.js"></script>
+    <script src="./common.js"></script>
+    <script>
+      // Receive click on field.
+      function clickField(clickObj) {
+        const idx = parseInt(clickObj.target.id.split('_')[1], 10)
+        const clickedCoords = gBoard.get_coords(idx)
+        const fiarCoords = gBoard.first_empty_in_column(clickedCoords.col)
+
+        setFieldWithCoords(fiarCoords)
+        drawBoardFields()
+      }
+
+      run_wasm(6, 7, 4, './four_in_a_row_worker.js', 'Four in a row')
+    </script>
+  </body>
+</html>
