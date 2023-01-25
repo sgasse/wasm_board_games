@@ -6,7 +6,7 @@ pub struct TreeEvaluator<T> {
     parent: Vec<usize>,
     children: Vec<Vec<usize>>,
     game_states: Vec<T>,
-    avg_values: Vec<i32>,
+    worst_case_values: Vec<i32>,
 }
 
 impl<'a, T> TreeEvaluator<T>
@@ -18,7 +18,7 @@ where
             parent: vec![0],
             children: vec![vec![]],
             game_states: vec![init_state],
-            avg_values: vec![0],
+            worst_case_values: vec![0],
         }
     }
 
@@ -43,7 +43,7 @@ where
 
     fn expand_state(&mut self, idx: usize) -> Option<Vec<usize>> {
         let g_state = self.game_states.get(idx).expect("Game state");
-        let pos_value = *self.avg_values.get(idx).expect("Position value");
+        let pos_value = *self.worst_case_values.get(idx).expect("Position value");
         if pos_value == X_WIN_VALUE || pos_value == -X_WIN_VALUE {
             // State is final - skip expansion
             return None;
@@ -57,8 +57,8 @@ where
             .into_iter()
             .collect();
 
-        // Positional values of child states
-        let mut avg_values: Vec<i32> = child_states
+        // Initialize worst case values to positional values to catch final states
+        let mut worst_case_values: Vec<i32> = child_states
             .iter()
             .map(|state| state.position_value())
             .collect();
@@ -68,6 +68,7 @@ where
             .get_mut(idx)
             .expect("Parent")
             .append(&mut child_idx.clone());
+
         // Add parent for children
         self.parent.append(&mut vec![idx; child_states.len()]);
         for _ in 0..child_states.len() {
@@ -77,7 +78,7 @@ where
 
         // Add child states and positional values
         self.game_states.append(&mut child_states);
-        self.avg_values.append(&mut avg_values);
+        self.worst_case_values.append(&mut worst_case_values);
 
         // Return child indexes for expansion
         Some(child_idx)
@@ -95,9 +96,9 @@ where
         // children are evaluated before their parents.
         for idx in reverse_bfs_order {
             let side = self.game_states().get(idx).expect("Game state").side();
-            let init_value = *self.avg_values.get(idx).expect("Avg value");
+            let init_value = *self.worst_case_values.get(idx).expect("Avg value");
             if init_value == X_WIN_VALUE || init_value == -X_WIN_VALUE {
-                // Skip evaluating the average of children for final states
+                // Skip evaluating the worst case of children for final states
                 continue;
             }
 
@@ -107,7 +108,7 @@ where
                 .get(idx)
                 .expect("Children")
                 .iter()
-                .map(|&child_idx| *self.avg_values.get(child_idx).expect("Avg value"))
+                .map(|&child_idx| *self.worst_case_values.get(child_idx).expect("Avg value"))
                 .collect();
 
             // Fix here TODO
@@ -127,7 +128,7 @@ where
                 }
             };
 
-            self.avg_values[idx] = avg_value;
+            self.worst_case_values[idx] = avg_value;
         }
     }
 
@@ -135,8 +136,8 @@ where
         &self.game_states
     }
 
-    pub fn avg_values(&self) -> &Vec<i32> {
-        &self.avg_values
+    pub fn worst_case_values(&self) -> &Vec<i32> {
+        &self.worst_case_values
     }
 
     pub fn children(&self) -> &Vec<Vec<usize>> {
@@ -225,7 +226,7 @@ mod test {
         assert_eq!(tree_eval.parent.len(), 4);
         assert_eq!(tree_eval.children.len(), 4);
         assert_eq!(tree_eval.game_states.len(), 4);
-        assert_eq!(tree_eval.avg_values.len(), 4);
+        assert_eq!(tree_eval.worst_case_values.len(), 4);
 
         assert_eq!(tree_eval.children.get(0).unwrap(), &vec![1, 2, 3]);
     }
@@ -238,7 +239,7 @@ mod test {
         assert_eq!(tree_eval.parent.len(), 6);
         assert_eq!(tree_eval.children.len(), 6);
         assert_eq!(tree_eval.game_states.len(), 6);
-        assert_eq!(tree_eval.avg_values.len(), 6);
+        assert_eq!(tree_eval.worst_case_values.len(), 6);
     }
 
     #[test]
@@ -253,13 +254,15 @@ mod test {
     #[test]
     fn test_evaluate_states() {
         let mut tree_eval = TreeEvaluator::new(get_ref_state());
-        tree_eval.expand_states_by(0, 2);
+        tree_eval.expand_states_by(0, 9);
 
         tree_eval.evaluate_states(0);
-        assert_eq!(tree_eval.avg_values[0], X_WIN_VALUE / 2);
+        // The reference state is one before winning, we expect a worst case
+        // value of the full win value.
+        assert_eq!(tree_eval.worst_case_values[0], X_WIN_VALUE);
     }
 
-    #[test]
+    // This is currently only used for debugging purposes, no real test
     fn test_t3_corner_state() {
         let mut b1 = Board::new(3, 3);
         // X

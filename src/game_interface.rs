@@ -63,8 +63,12 @@ macro_rules! gen_game_if_impl {
 
                             // If children are empty, check if the position value
                             // indicates a final state.
-                            if let Some(&avg_value) = self.tree_eval.avg_values().get(idx) {
-                                if avg_value != X_WIN_VALUE && avg_value != -X_WIN_VALUE {
+                            if let Some(&worst_case_value) =
+                                self.tree_eval.worst_case_values().get(idx)
+                            {
+                                if worst_case_value != X_WIN_VALUE
+                                    && worst_case_value != -X_WIN_VALUE
+                                {
                                     // No children and no terminal value -> this node
                                     // should be expanded.
                                     return true;
@@ -103,7 +107,7 @@ macro_rules! gen_game_if_impl {
                 // Evaluate value of all direct child states
                 self.tree_eval.evaluate_states(self.last_move_idx);
 
-                let (best_idx, best_avg_value) = self.identify_best_move();
+                let (best_idx, best_worst_case_value) = self.identify_best_move();
                 let best_move = self
                     .tree_eval
                     .game_states()
@@ -113,8 +117,8 @@ macro_rules! gen_game_if_impl {
 
                 console::log_1(
                     &format!(
-                        "Identified best move {:?} with avg_value {}",
-                        &best_move, best_avg_value
+                        "Identified best move {:?} with worst_case_value {}",
+                        &best_move, best_worst_case_value
                     )
                     .into(),
                 );
@@ -176,43 +180,46 @@ macro_rules! gen_game_if_impl {
                     .get(self.last_move_idx)
                     .expect("Direct children");
 
-                let avg_values = direct_children_idx
+                let worst_case_values = direct_children_idx
                     .iter()
-                    .filter_map(|&child_idx| self.tree_eval.avg_values().get(child_idx));
+                    .filter_map(|&child_idx| self.tree_eval.worst_case_values().get(child_idx));
 
-                let (best_idx, best_avg_value): (Option<usize>, i32) = match last_state.side() {
-                    Cell::O => {
-                        direct_children_idx.iter().zip(avg_values).fold(
-                            (None, -X_WIN_VALUE),
-                            |(best_idx, best_avg_value), (&child_idx, &child_avg_value)| {
-                                // If the last turn was O, the next is X and we want
-                                // maximum values
-                                if child_avg_value > best_avg_value {
-                                    return (Some(child_idx), child_avg_value);
-                                }
-                                (best_idx, best_avg_value)
-                            },
-                        )
-                    }
-                    Cell::X => {
-                        direct_children_idx.iter().zip(avg_values).fold(
-                            (None, X_WIN_VALUE),
-                            |(best_idx, best_avg_value), (&child_idx, &child_avg_value)| {
-                                // If the last turn was O, the next is X and we want
-                                // maximum values
-                                if child_avg_value < best_avg_value {
-                                    return (Some(child_idx), child_avg_value);
-                                }
-                                (best_idx, best_avg_value)
-                            },
-                        )
-                    }
-                    Cell::Empty => (None, 0),
-                };
+                let (best_idx, best_worst_case_value): (Option<usize>, i32) =
+                    match last_state.side() {
+                        Cell::O => {
+                            direct_children_idx.iter().zip(worst_case_values).fold(
+                                (None, -X_WIN_VALUE),
+                                |(best_idx, best_worst_case_value),
+                                 (&child_idx, &child_worst_case_value)| {
+                                    // If the last turn was O, the next is X and we want
+                                    // maximum values
+                                    if child_worst_case_value > best_worst_case_value {
+                                        return (Some(child_idx), child_worst_case_value);
+                                    }
+                                    (best_idx, best_worst_case_value)
+                                },
+                            )
+                        }
+                        Cell::X => {
+                            direct_children_idx.iter().zip(worst_case_values).fold(
+                                (None, X_WIN_VALUE),
+                                |(best_idx, best_worst_case_value),
+                                 (&child_idx, &child_worst_case_value)| {
+                                    // If the last turn was O, the next is X and we want
+                                    // maximum values
+                                    if child_worst_case_value < best_worst_case_value {
+                                        return (Some(child_idx), child_worst_case_value);
+                                    }
+                                    (best_idx, best_worst_case_value)
+                                },
+                            )
+                        }
+                        Cell::Empty => (None, 0),
+                    };
 
                 (
                     best_idx.expect("Should have found a best index"),
-                    best_avg_value,
+                    best_worst_case_value,
                 )
             }
         }
