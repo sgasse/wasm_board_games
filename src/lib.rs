@@ -23,4 +23,5 @@ pub trait GameState {
     where
         Self: Sized;
     fn position_value(&self) -> i32;
+    fn side(&self) -> Cell;
 }

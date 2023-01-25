@@ -77,6 +77,10 @@ impl GameState for T3GameState {
             Cell::Empty => return 0,
         }
     }
+
+    fn side(&self) -> Cell {
+        self.last_move.side
+    }
 }
 
 #[cfg(test)]
