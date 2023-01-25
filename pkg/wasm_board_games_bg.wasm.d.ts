@@ -1,10 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
-export function __wbg_t3gamestate_free(a: number): void;
-export function t3gamestate_new(a: number, b: number): number;
-export function t3gamestate_side(a: number): number;
-export function t3gamestate_last_move(a: number): number;
 export function t3gameinterface_new(): number;
 export function t3gameinterface_expand_one_level(a: number): number;
 export function t3gameinterface_track_move(a: number, b: number): number;
@@ -47,5 +43,9 @@ export function __wbg_fiargamestate_free(a: number): void;
 export function fiargamestate_new(a: number, b: number): number;
 export function fiargamestate_side(a: number): number;
 export function fiargamestate_last_move(a: number): number;
+export function __wbg_t3gamestate_free(a: number): void;
+export function t3gamestate_new(a: number, b: number): number;
+export function t3gamestate_side(a: number): number;
+export function t3gamestate_last_move(a: number): number;
 export function __wbindgen_malloc(a: number): number;
 export function __wbindgen_realloc(a: number, b: number, c: number): number;

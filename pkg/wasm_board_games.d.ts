@@ -220,10 +220,6 @@ declare type InitInput = RequestInfo | URL | Response | BufferSource | WebAssemb
 
 declare interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly __wbg_t3gamestate_free: (a: number) => void;
-  readonly t3gamestate_new: (a: number, b: number) => number;
-  readonly t3gamestate_side: (a: number) => number;
-  readonly t3gamestate_last_move: (a: number) => number;
   readonly t3gameinterface_new: () => number;
   readonly t3gameinterface_expand_one_level: (a: number) => number;
   readonly t3gameinterface_track_move: (a: number, b: number) => number;
@@ -266,6 +262,10 @@ declare interface InitOutput {
   readonly fiargamestate_new: (a: number, b: number) => number;
   readonly fiargamestate_side: (a: number) => number;
   readonly fiargamestate_last_move: (a: number) => number;
+  readonly __wbg_t3gamestate_free: (a: number) => void;
+  readonly t3gamestate_new: (a: number, b: number) => number;
+  readonly t3gamestate_side: (a: number) => number;
+  readonly t3gamestate_last_move: (a: number) => number;
   readonly __wbindgen_malloc: (a: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number) => number;
 }
