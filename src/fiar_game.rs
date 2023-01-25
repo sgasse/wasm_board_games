@@ -80,6 +80,10 @@ impl GameState for FiarGameState {
             Cell::Empty => return 0,
         }
     }
+
+    fn side(&self) -> Cell {
+        self.last_move.side
+    }
 }
 
 #[cfg(test)]

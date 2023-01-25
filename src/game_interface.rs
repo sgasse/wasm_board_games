@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::console;
 
 #[wasm_bindgen]
+#[derive(PartialEq)]
 pub enum ExpandResult {
     Done,
     NotDone,

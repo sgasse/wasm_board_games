@@ -1,4 +1,4 @@
-use super::{GameState, X_WIN_VALUE};
+use super::{Cell, GameState, X_WIN_VALUE};
 use std::collections::VecDeque;
 use web_sys::console;
 
@@ -94,6 +94,7 @@ where
         // By traversing the graph in reverse BFS-order, we can be sure that
         // children are evaluated before their parents.
         for idx in reverse_bfs_order {
+            let side = self.game_states().get(idx).expect("Game state").side();
             let init_value = *self.avg_values.get(idx).expect("Avg value");
             if init_value == X_WIN_VALUE || init_value == -X_WIN_VALUE {
                 // Skip evaluating the average of children for final states
@@ -109,9 +110,21 @@ where
                 .map(|&child_idx| *self.avg_values.get(child_idx).expect("Avg value"))
                 .collect();
 
-            let avg_value = match child_vals.is_empty() {
-                true => init_value,
-                false => child_vals.iter().sum::<i32>() / child_vals.len() as i32,
+            // Fix here TODO
+            let avg_value = match (child_vals.is_empty(), side) {
+                (true, _) => init_value,
+                (false, Cell::X) => *child_vals
+                    .iter()
+                    .min()
+                    .expect("safe due to .is_empty() check"),
+                (false, Cell::O) => *child_vals
+                    .iter()
+                    .max()
+                    .expect("save due to .is_empty() check"),
+                (false, Cell::Empty) => {
+                    console::log_1(&"Unexpected empty state in previous move".to_owned().into());
+                    init_value
+                }
             };
 
             self.avg_values[idx] = avg_value;
@@ -244,5 +257,38 @@ mod test {
 
         tree_eval.evaluate_states(0);
         assert_eq!(tree_eval.avg_values[0], X_WIN_VALUE / 2);
+    }
+
+    #[test]
+    fn test_t3_corner_state() {
+        let mut b1 = Board::new(3, 3);
+        // X
+        //  O
+        //   X
+        // -> O should set on one of the edges, *not* the corners
+        let _ = b1.set_state(vec![
+            Cell::X,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::O,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::X,
+        ]);
+
+        let start_state = T3GameState::new(
+            b1,
+            BoardMove {
+                coords: Coords { row: 0, col: 0 },
+                side: Cell::X,
+            },
+        );
+        let mut tree_eval = TreeEvaluator::new(start_state);
+
+        tree_eval.expand_states_by(0, 9);
+        tree_eval.evaluate_states(0);
+        println!("Expansion done");
     }
 }
