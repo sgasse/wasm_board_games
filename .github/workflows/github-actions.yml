@@ -2,7 +2,6 @@ name: CI Workflow
 
 on:
   push:
-    branches: [ "main" ]
 
 permissions:
   contents: write
@@ -24,6 +23,7 @@ jobs:
         run: rm www/pkg/.gitignore
 
       - name: Deploy to GH pages
+        if: success() && github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: www
