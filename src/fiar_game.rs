@@ -88,8 +88,7 @@ impl GameState for FiarGameState {
 
 #[cfg(test)]
 mod test {
-
-    use crate::{Board, BoardMove, Cell, Coords, FiarGameState, GameState};
+    use crate::*;
 
     #[test]
     fn test_fiargamestate_expand() -> Result<(), ()> {

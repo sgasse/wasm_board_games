@@ -32,8 +32,8 @@ python3 -m http.server --bind 127.0.0.1
 Both games share the same backend _engine_: We build a tree of possible moves
 down to a certain depth. Now the player can either do a move, which will be
 tracked in the evaluator or we can request the next best move from the
-evaluator. The best move is calculated in a traditional manner by summing over
-the average position value of each move.
+evaluator. The best move is calculated in a traditional manner using the
+[minimax algorithm][minimax].
 
 ## Key Features
 
@@ -141,20 +141,21 @@ documentation everywhere but only where I need it myself.
 
 ~ Simon B. Gasse
 
-[install_rust]: https://www.rust-lang.org/tools/install
-[html_canvas]: https://www.w3schools.com/html/html5_canvas.asp
-[wasm-pack]: https://github.com/rustwasm/wasm-pack
-[wasm-bindgen]: https://github.com/rustwasm/wasm-bindgen
-[web-sys]: https://rustwasm.github.io/wasm-bindgen/web-sys/index.html
-[wasm-worker]: https://github.com/sgasse/wasm_worker_interaction
-[rust_book]: https://doc.rust-lang.org/book/
-[int_mut]: https://doc.rust-lang.org/book/ch15-05-interior-mutability.html
-[match]: https://doc.rust-lang.org/book/ch06-02-match.html
-[if_let]: https://doc.rust-lang.org/book/ch06-03-if-let.html
-[result]: https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html
-[enum_variants]: https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html
-[iter]: https://doc.rust-lang.org/book/ch13-02-iterators.html
-[wasm_book_render]: https://rustwasm.github.io/docs/book/game-of-life/implementing.html#rendering-to-canvas-directly-from-memory
 [decl_macros]: https://doc.rust-lang.org/book/ch19-06-macros.html#declarative-macros-with-macro_rules-for-general-metaprogramming
+[enum_variants]: https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html
 [generics]: https://doc.rust-lang.org/rust-by-example/generics.html
+[html_canvas]: https://www.w3schools.com/html/html5_canvas.asp
+[if_let]: https://doc.rust-lang.org/book/ch06-03-if-let.html
+[install_rust]: https://www.rust-lang.org/tools/install
+[int_mut]: https://doc.rust-lang.org/book/ch15-05-interior-mutability.html
+[iter]: https://doc.rust-lang.org/book/ch13-02-iterators.html
+[match]: https://doc.rust-lang.org/book/ch06-02-match.html
+[minimax]: https://en.wikipedia.org/wiki/Minimax
+[result]: https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html
+[rust_book]: https://doc.rust-lang.org/book/
 [traits]: https://doc.rust-lang.org/book/ch10-02-traits.html
+[wasm_book_render]: https://rustwasm.github.io/docs/book/game-of-life/implementing.html#rendering-to-canvas-directly-from-memory
+[wasm-bindgen]: https://github.com/rustwasm/wasm-bindgen
+[wasm-pack]: https://github.com/rustwasm/wasm-pack
+[wasm-worker]: https://github.com/sgasse/wasm_worker_interaction
+[web-sys]: https://rustwasm.github.io/wasm-bindgen/web-sys/index.html
