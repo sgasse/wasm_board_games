@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::console;
 
 #[wasm_bindgen]
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum ExpandResult {
     Done,
     NotDone,
@@ -221,6 +221,12 @@ macro_rules! gen_game_if_impl {
                     best_idx.expect("Should have found a best index"),
                     best_worst_case_value,
                 )
+            }
+        }
+
+        impl Default for $game_if {
+            fn default() -> Self {
+                Self::new()
             }
         }
     };

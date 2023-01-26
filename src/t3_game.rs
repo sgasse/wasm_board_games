@@ -53,13 +53,13 @@ impl GameState for T3GameState {
                 if let Cell::Empty = cell {
                     let mut new_board = self.board.clone();
                     let Coords { row, col } = new_board.get_coords(idx);
-                    new_board.set_cell(row, col, next_side.clone());
+                    new_board.set_cell(row, col, next_side);
 
                     return Some(T3GameState {
                         board: new_board,
                         last_move: BoardMove {
                             coords: Coords { row, col },
-                            side: next_side.clone(),
+                            side: next_side,
                         },
                     });
                 }
@@ -72,9 +72,9 @@ impl GameState for T3GameState {
 
     fn position_value(&self) -> i32 {
         match self.board.line_winner(&self.last_move.coords, 3) {
-            Cell::X => return X_WIN_VALUE,
-            Cell::O => return -X_WIN_VALUE,
-            Cell::Empty => return 0,
+            Cell::X => X_WIN_VALUE,
+            Cell::O => -X_WIN_VALUE,
+            Cell::Empty => 0,
         }
     }
 

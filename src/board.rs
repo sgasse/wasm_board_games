@@ -1,8 +1,9 @@
-use crate::{Cell, Coords, DeltaCoords};
+use crate::{Cell, Coords, DeltaCoords, Error};
+use simple_error::bail;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Board {
     cells: Vec<Cell>,
     width: u32,
@@ -14,16 +15,16 @@ impl Board {
         &self.cells
     }
 
-    pub fn get_cell(&self, row: u32, col: u32) -> Result<Cell, ()> {
+    pub fn get_cell(&self, row: u32, col: u32) -> Result<Cell, Error> {
         match self.in_bounds(row, col) {
-            true => Ok(self.cells.get(self.get_index(row, col)).unwrap().clone()),
-            false => Err(()),
+            true => Ok(*self.cells.get(self.get_index(row, col)).unwrap()),
+            false => bail!("Out of bounds"),
         }
     }
 
-    pub fn set_state(&mut self, state: Vec<Cell>) -> Result<(), ()> {
+    pub fn set_state(&mut self, state: Vec<Cell>) -> Result<(), Error> {
         if state.len() != (self.width * self.height) as usize {
-            return Err(());
+            bail!("State size does not match board size");
         }
 
         self.cells = state;
@@ -73,11 +74,7 @@ impl Board {
     }
 
     pub fn in_bounds(&self, row: u32, col: u32) -> bool {
-        if row < self.height && col < self.width {
-            true
-        } else {
-            false
-        }
+        row < self.height && col < self.width
     }
 
     pub fn get_coords(&self, idx: usize) -> Coords {
@@ -160,7 +157,7 @@ impl Board {
         ];
 
         for (pos, d_pos) in pos_d_pos_pairs {
-            let line_winner = side_with_min_equal(&self, &pos, &d_pos, num_winner);
+            let line_winner = side_with_min_equal(self, &pos, &d_pos, num_winner);
             match line_winner {
                 Cell::Empty => continue,
                 side => return side,

@@ -53,13 +53,13 @@ impl GameState for FiarGameState {
             for row in (0..self.board.height()).rev() {
                 if let Ok(Cell::Empty) = self.board.get_cell(row, col) {
                     let mut new_board = self.board.clone();
-                    new_board.set_cell(row, col, next_side.clone());
+                    new_board.set_cell(row, col, next_side);
 
                     next_states.push(FiarGameState {
                         board: new_board,
                         last_move: BoardMove {
                             coords: Coords { row, col },
-                            side: next_side.clone(),
+                            side: next_side,
                         },
                     });
 
@@ -75,9 +75,9 @@ impl GameState for FiarGameState {
 
     fn position_value(&self) -> i32 {
         match self.board.line_winner(&self.last_move.coords, 4) {
-            Cell::X => return X_WIN_VALUE,
-            Cell::O => return -X_WIN_VALUE,
-            Cell::Empty => return 0,
+            Cell::X => X_WIN_VALUE,
+            Cell::O => -X_WIN_VALUE,
+            Cell::Empty => 0,
         }
     }
 
@@ -91,7 +91,7 @@ mod test {
     use crate::*;
 
     #[test]
-    fn test_fiargamestate_expand() -> Result<(), ()> {
+    fn test_fiargamestate_expand() -> Result<(), Error> {
         let b1 = Board::new(6, 7);
 
         let game_state = FiarGameState {
@@ -115,7 +115,7 @@ mod test {
                             assert!(cell == Cell::Empty || cell == Cell::X);
                         }
                         _ => {
-                            assert_eq!(state.board.get_cell(row, col), Ok(Cell::Empty))
+                            assert_eq!(state.board.get_cell(row, col)?, Cell::Empty)
                         }
                     }
                 }
