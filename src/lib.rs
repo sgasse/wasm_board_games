@@ -25,3 +25,5 @@ pub trait GameState {
     fn position_value(&self) -> i32;
     fn side(&self) -> Cell;
 }
+
+pub type Error = Box<dyn std::error::Error>;

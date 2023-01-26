@@ -27,12 +27,12 @@ where
         Self::new(init_state)
     }
 
-    pub fn expand_and_get_children_idx(&mut self, idx_to_expand: &Vec<usize>) -> Vec<usize> {
+    pub fn expand_and_get_children_idx(&mut self, idx_to_expand: &[usize]) -> Vec<usize> {
         let mut expanded_children: Vec<usize> = Vec::new();
 
         for &idx in idx_to_expand.iter() {
-            if let Some(children_idx) = self.expand_state(idx) {
-                expanded_children.append(&mut Vec::from(children_idx));
+            if let Some(mut children_idx) = self.expand_state(idx) {
+                expanded_children.append(&mut children_idx);
             }
         }
 
@@ -53,9 +53,8 @@ where
         let mut child_states = g_state.expand();
 
         // Indexes of child states in the tree data structure
-        let child_idx: Vec<usize> = (self.parent.len()..self.parent.len() + child_states.len())
-            .into_iter()
-            .collect();
+        let child_idx: Vec<usize> =
+            (self.parent.len()..self.parent.len() + child_states.len()).collect();
 
         // Initialize worst case values to positional values to catch final states
         let mut worst_case_values: Vec<i32> = child_states
@@ -162,7 +161,7 @@ where
 
     pub fn bfs_iter(&'a self, start_idx: usize) -> BfsIterator<'a, T> {
         BfsIterator {
-            tree_eval: &self,
+            tree_eval: self,
             buffer: VecDeque::from([start_idx]),
         }
     }
@@ -181,9 +180,9 @@ impl<'a, T> Iterator for BfsIterator<'a, T> {
             Some(idx) => {
                 let children = self.tree_eval.children.get(idx).expect("Children");
                 self.buffer.append(&mut VecDeque::from(children.clone()));
-                return Some(idx);
+                Some(idx)
             }
-            None => return None,
+            None => None,
         }
     }
 }
@@ -263,6 +262,7 @@ mod test {
     }
 
     // This is currently only used for debugging purposes, no real test
+    #[test]
     fn test_t3_corner_state() {
         let mut b1 = Board::new(3, 3);
         // X

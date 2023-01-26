@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Cell {
     Empty,
     X,
@@ -31,7 +31,7 @@ pub struct DeltaCoords {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct BoardMove {
     pub coords: Coords,
     pub side: Cell,
@@ -47,10 +47,10 @@ impl BoardMove {
     }
 
     pub fn from_js_value(js_value: JsValue) -> Self {
-        js_value.into_serde().unwrap()
+        serde_wasm_bindgen::from_value(js_value).unwrap()
     }
 
     pub fn to_js_value(&self) -> JsValue {
-        JsValue::from_serde(&self).unwrap()
+        serde_wasm_bindgen::to_value(&self).unwrap()
     }
 }
