@@ -4,15 +4,15 @@ declare namespace wasm_bindgen {
 	/**
 	*/
 	export enum ExpandResult {
-	  Done,
-	  NotDone,
+	  Done = 0,
+	  NotDone = 1,
 	}
 	/**
 	*/
 	export enum Cell {
-	  Empty,
-	  X,
-	  O,
+	  Empty = 0,
+	  X = 1,
+	  O = 2,
 	}
 	/**
 	*/
