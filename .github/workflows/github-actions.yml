@@ -2,6 +2,8 @@ name: CI Workflow
 
 on:
   push:
+    branches: [ "main" ]
+  pull_request:
 
 permissions:
   contents: write
@@ -10,36 +12,56 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+
+  lint:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          components: clippy
+          targets: wasm32-unknown-unknown
+      # Note: Temporarily ignore extra unused type parameters from nightly clippy
+      # There is an issue with wasm_bindgen who's fix is not yet released.
+      # https://github.com/rustwasm/wasm-bindgen/issues/2774
+      - run: >
+          cargo +nightly clippy --no-deps -- -D warnings
+          -A clippy::extra-unused-type-parameters -Z macro-backtrace
+
+  format:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          components: rustfmt
+          targets: wasm32-unknown-unknown
+      - run: cargo +nightly fmt --check
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: cargo test
+
   build_lint_test_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Update local Rust toolchain
-        run: |
-          rustup update
-          rustup install nightly
-          rustup component add clippy rustfmt --toolchain nightly
-
-      - name: Get toolchain info
-        run: |
-          cargo --version --verbose
-          rustc --version
-          cargo clippy --version
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
 
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-
-      - name: Lint
-        run: |
-          cargo +nightly fmt -- --check
-          cargo +nightly clippy -- -D warnings
-
-      - name: Test
-        run: |
-          cargo check
-          cargo test --all
 
       - name: Build WASM code
         run: ./build.sh
